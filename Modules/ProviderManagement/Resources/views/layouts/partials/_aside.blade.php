@@ -168,6 +168,7 @@ $logo = getBusinessSettingsImageFullPath(key: 'business_logo', settingType: 'bus
                 </ul>
             </li>
 
+            {{-- Help & Support Commented Out
             <li class="nav-category">{{ translate('Help & support') }}</li>
             <li>
                 <a href="{{ route('provider.chat.index', ['user_type' => 'super_admin']) }}"
@@ -176,6 +177,7 @@ $logo = getBusinessSettingsImageFullPath(key: 'business_logo', settingType: 'bus
                     <span class="link-title">{{ translate('Chatting') }}</span>
                 </a>
             </li>
+            --}}
 
             <li class="nav-category" title="{{ translate('Service_Management') }}">
                 {{ translate('Service_Management') }}</li>
@@ -205,6 +207,7 @@ $logo = getBusinessSettingsImageFullPath(key: 'business_logo', settingType: 'bus
 
             {{-- My Cars relocated to Available Services --}}
 
+            {{-- Promotion Management Commented Out
             <li class="nav-category">{{ translate('Promotion Management') }}</li>
 
             <li class="has-sub-item {{ request()->is('provider/advertisements/*') ? 'sub-menu-opened' : '' }}">
@@ -227,6 +230,7 @@ $logo = getBusinessSettingsImageFullPath(key: 'business_logo', settingType: 'bus
                     </li>
                 </ul>
             </li>
+            --}}
 
             <li class="nav-category" title="{{ translate('User_Management') }}">{{ translate('User Management') }}
             </li>
@@ -321,6 +325,7 @@ $logo = getBusinessSettingsImageFullPath(key: 'business_logo', settingType: 'bus
                     <span class="link-title">{{ translate('payment_information') }}</span>
                 </a>
             </li>
+            {{-- Notification Channel Commented Out
             <li>
                 <a href="{{ route('provider.configuration.get-notification-setting', ['notification_type' => 'provider']) }}"
                     class="{{ request()->is('provider/configuration/get-notification-setting') ? 'active-menu' : '' }}">
@@ -328,6 +333,7 @@ $logo = getBusinessSettingsImageFullPath(key: 'business_logo', settingType: 'bus
                     <span class="link-title">{{ translate('Notification Channel') }}</span>
                 </a>
             </li>
+            --}}
 
             <li>
                 <a href="{{ route('provider.settings.terms-conditions') }}"
@@ -345,6 +351,7 @@ $logo = getBusinessSettingsImageFullPath(key: 'business_logo', settingType: 'bus
                 </a>
             </li>
 
+            {{-- Create Ads Card / Button Commented Out
             <li>
                 <div class="card"
                     data-bg-img="{{ asset('public/assets/provider-module') }}/img/media/create-ads-bg-vertical.png">
@@ -362,6 +369,7 @@ $logo = getBusinessSettingsImageFullPath(key: 'business_logo', settingType: 'bus
                     </div>
                 </div>
             </li>
+            --}}
         </ul>
     </div>
 </aside>

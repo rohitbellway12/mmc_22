@@ -136,6 +136,7 @@ $logo = getBusinessSettingsImageFullPath(key: 'business_logo', settingType: 'bus
                 </li>
             @endcan
 
+            {{-- Promotion Management Commented Out
             @canany(['discount_view', 'discount_add', 'coupon_view', 'coupon_add', 'bonus_view', 'bonus_add',
                 'campaign_view', 'campaign_add', 'advertisement_view', 'advertisement_add', 'banner_add', 'banner_view'])
                 <li class="nav-category" title="{{ translate('promotion_management') }}">
@@ -282,6 +283,7 @@ $logo = getBusinessSettingsImageFullPath(key: 'business_logo', settingType: 'bus
                     </a>
                 </li>
             @endcanany
+            --}}
 
             @canany(['push_notification_view', 'push_notification_add', 'notification_message_view',
                 'notification_message_add', 'notification_message_update', 'notification_channel_view',
@@ -309,6 +311,7 @@ $logo = getBusinessSettingsImageFullPath(key: 'business_logo', settingType: 'bus
                     </a>
                 </li>
             @endcanany
+            {{-- Notification Channel Commented Out
             @canany(['notification_channel_view', 'notification_channel_add'])
                 <li>
                     <a href="{{ route('admin.business-settings.notification-channel', ['notification_type' => 'user']) }}"
@@ -320,6 +323,7 @@ $logo = getBusinessSettingsImageFullPath(key: 'business_logo', settingType: 'bus
                     </a>
                 </li>
             @endcanany
+            --}}
 
 
             @canany(['provider_view', 'provider_add', 'onboarding_request_view', 'withdraw_view', 'withdraw_add'])
@@ -650,6 +654,7 @@ $logo = getBusinessSettingsImageFullPath(key: 'business_logo', settingType: 'bus
                     </ul>
                 </li>
             @endcan
+            {{-- Analytics Commented Out
             @can('analytics_view')
                 <li class="has-sub-item {{ request()->is('admin/analytics/*') ? 'sub-menu-opened' : '' }}">
                     <a href="#" class="{{ request()->is('admin/analytics/*') ? 'active-menu' : '' }}">
@@ -672,6 +677,7 @@ $logo = getBusinessSettingsImageFullPath(key: 'business_logo', settingType: 'bus
                     </ul>
                 </li>
             @endcan
+            --}}
 
 
             @canany(['business_view', 'subscription_package_view', 'subscriber_view', 'subscription_settings_view',
@@ -765,6 +771,7 @@ $logo = getBusinessSettingsImageFullPath(key: 'business_logo', settingType: 'bus
                 </li>
             @endcanany
 
+            {{-- 404 Logs & Cron Job Commented Out
             @can('error_logs_view')
                 <li>
                     <a href="{{ route('admin.business-settings.seo.setting', ['page_type' => 'error_logs']) }}"
@@ -784,8 +791,10 @@ $logo = getBusinessSettingsImageFullPath(key: 'business_logo', settingType: 'bus
                     </a>
                 </li>
             @endcan
+            --}}
 
 
+            {{-- System Setup Commented Out
             @canany(['login_setup_view', 'language_view', 'gallery_view', 'backup_view'])
                 <li class="nav-category" title="{{ translate('system_setup') }}">{{ translate('system_setup') }}</li>
             @endcanany
@@ -828,6 +837,7 @@ $logo = getBusinessSettingsImageFullPath(key: 'business_logo', settingType: 'bus
                     </a>
                 </li>
             @endcan
+            --}}
 
             @canany(['firebase_view', 'payment_method_view', 'configuration_view', 'ai_configuration_view'])
                 <li class="nav-category" title="{{ translate('3rd_party_setup') }}">{{ translate('3rd Party Setup') }}
@@ -852,6 +862,7 @@ $logo = getBusinessSettingsImageFullPath(key: 'business_logo', settingType: 'bus
                     </a>
                 </li>
             @endcan
+            {{-- AI Configuration Commented Out
             @can('ai_configuration_view')
                 <li>
                     <a href="{{ route('admin.configuration.ai-configuration') }}"
@@ -861,6 +872,7 @@ $logo = getBusinessSettingsImageFullPath(key: 'business_logo', settingType: 'bus
                     </a>
                 </li>
             @endcan
+            --}}
             @can('configuration_view')
                 <li>
                     <a href="{{ route('admin.configuration.third-party', 'map-api') }}"
@@ -875,6 +887,7 @@ $logo = getBusinessSettingsImageFullPath(key: 'business_logo', settingType: 'bus
                 </li>
             @endcan
 
+            {{-- System Addon Commented Out
             @canany(['addon_view', 'addon_add'])
                 <li class="nav-category" title="{{ translate('system_addon') }}">
                     {{ translate('system_addon') }}
@@ -910,6 +923,7 @@ $logo = getBusinessSettingsImageFullPath(key: 'business_logo', settingType: 'bus
                     </li>
                 @endif
             @endcanany
+            --}}
         </ul>
     </div>
 </aside>
