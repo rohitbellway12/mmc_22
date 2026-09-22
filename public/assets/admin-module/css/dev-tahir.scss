@@ -712,7 +712,11 @@ code.hljs{
 }
 .modal-content_cont{
   min-height: 460px;
-  background-color: #fff !important;
+  background-color: var(--bs-white) !important;
+}
+[data-bs-theme=dark] .modal-content_cont{
+  background-color: #232325 !important;
+  color: #ccd0d3;
 }
 
 .pointer {

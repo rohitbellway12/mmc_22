@@ -59,7 +59,7 @@ class PostController extends Controller
         $bidding_post_validity = $bidding_post_validity > 0 ? $bidding_post_validity : 30;
         $providerId = $request->user()->provider->id;
         $posts = $this->post
-            ->with(['bids.provider', 'addition_instructions', 'service', 'category', 'sub_category', 'booking', 'customer', 'targeted_providers'])
+            ->with(['bids.provider', 'addition_instructions', 'service', 'services', 'category', 'sub_category', 'booking', 'customer', 'targeted_providers'])
             ->where('is_booked', 0)
             ->whereNotIn('id', $ignored_posts)
             ->where('zone_id', $request->user()->provider->zone_id)
@@ -193,7 +193,7 @@ class PostController extends Controller
     public function details(Request $request, $post_id): Renderable|RedirectResponse
     {
         $post = $this->post
-            ->with(['bids', 'addition_instructions', 'service', 'category', 'sub_category', 'booking', 'customer', 'service_address'])
+            ->with(['bids', 'addition_instructions', 'service', 'services.category', 'services.subCategory', 'category', 'sub_category', 'booking', 'customer', 'service_address'])
             ->where('id', $post_id)
             ->first();
 
@@ -208,7 +208,7 @@ class PostController extends Controller
         }
 
         if (!isset($post)) {
-            Toastr::success(translate(DEFAULT_404['message']));
+            Toastr::error(translate(DEFAULT_404['message']));
             return back();
         }
 

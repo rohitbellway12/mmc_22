@@ -17,8 +17,8 @@
                     <div class="card-body">
                         <div class="row g-3">
                             <div class="col-lg-6">
-                                <div class="card bg-primary-light shadow-none">
-                                    <div class="card-body pb-5">
+                                <div class="card bg-primary-light shadow-none h-100">
+                                    <div class="card-body">
                                         <div class="media flex-wrap gap-3">
                                             <img width="140" class="radius-10"
                                                  src="{{onErrorImage(
@@ -48,34 +48,92 @@
                                 </div>
                             </div>
                             <div class="col-lg-6">
-                                <div class="card bg-primary-light shadow-none">
-                                    <div class="card-body pb-5">
-                                        <div class="d-flex align-items-center gap-2 mb-3">
-                                            <img width="18"
-                                                 src="{{asset('public/assets/provider-module')}}/img/media/more-info.png"
-                                                 alt="">
-                                            <h4>{{translate('Service Information')}}</h4>
-                                        </div>
-                                        <div class="media gap-2 mb-4">
-                                            <img width="30"
-                                                 src="{{onErrorImage(
-                                                        $post?->sub_category?->image,
-                                                        asset('storage/app/public/category').'/' . $post?->sub_category?->image,
-                                                        asset('public/assets/placeholder.png') ,
-                                                        'category/')}}"
-                                                 alt="{{ translate('category') }}">
-                                            <div class="media-body">
-                                                <h5>{{$post?->service?->name}}</h5>
-                                                <div class="text-muted fs-12">{{$post?->sub_category?->name}}</div>
+                                <div class="card bg-primary-light shadow-none h-100">
+                                    <div class="card-body d-flex flex-column justify-content-between">
+                                        <div>
+                                            @php
+                                                $allServices = ($post->services && $post->services->count() > 0)
+                                                    ? $post->services
+                                                    : ($post->service ? collect([$post->service]) : collect([]));
+                                            @endphp
+                                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <img width="18"
+                                                         src="{{asset('public/assets/provider-module')}}/img/media/more-info.png"
+                                                         alt="">
+                                                    <h4 class="m-0">{{translate('Service Information')}}</h4>
+                                                </div>
+                                                @if($allServices->count() > 1)
+                                                    <span class="badge bg-primary text-white fs-12 px-2.5 py-1">
+                                                        <i class="material-icons fs-14 align-middle">build</i> {{$allServices->count()}} {{translate('Services Requested')}}
+                                                    </span>
+                                                @endif
                                             </div>
+
+                                            @if($allServices->count() > 0)
+                                                <div class="d-flex flex-column gap-2 mb-3">
+                                                    @foreach($allServices as $idx => $serv)
+                                                        <div class="p-2.5 rounded border d-flex align-items-center justify-content-between gap-3 shadow-xs"
+                                                             style="background: rgba(var(--c1-rgb, 4, 97, 68), 0.05);">
+                                                            <div class="media align-items-center gap-3">
+                                                                <div class="position-relative">
+                                                                    <img width="46" height="46" class="rounded object-fit-cover border"
+                                                                         src="{{ $serv->thumbnail_full_path ?? onErrorImage(
+                                                                                $serv?->subCategory?->image ?? $post?->sub_category?->image,
+                                                                                asset('storage/app/public/category').'/' . ($serv?->subCategory?->image ?? $post?->sub_category?->image),
+                                                                                asset('public/assets/placeholder.png'),
+                                                                                'category/') }}"
+                                                                         alt="{{ $serv->name }}">
+                                                                    @if($allServices->count() > 1)
+                                                                        <span class="badge bg-primary text-white position-absolute top-0 start-0 translate-middle rounded-circle p-1" style="font-size: 10px; min-width: 20px; line-height: 12px; text-align: center;">
+                                                                            {{ $idx + 1 }}
+                                                                        </span>
+                                                                    @endif
+                                                                </div>
+                                                                <div class="media-body">
+                                                                    <h5 class="mb-1 fw-bold">{{ $serv->name }}</h5>
+                                                                    <div class="text-muted fs-12">
+                                                                        <span class="badge bg-white text-primary border" style="font-size: 11px;">
+                                                                            {{ $serv->subCategory?->name ?? ($serv->category?->name ?? $post?->sub_category?->name ?? translate('Service')) }}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            @else
+                                                <div class="media gap-2 mb-4">
+                                                    <img width="30"
+                                                         src="{{onErrorImage(
+                                                                $post?->sub_category?->image,
+                                                                asset('storage/app/public/category').'/' . $post?->sub_category?->image,
+                                                                asset('public/assets/placeholder.png') ,
+                                                                'category/')}}"
+                                                         alt="{{ translate('category') }}">
+                                                    <div class="media-body">
+                                                        <h5>{{$post?->service?->name ?? translate('Service not available')}}</h5>
+                                                        <div class="text-muted fs-12">{{$post?->sub_category?->name}}</div>
+                                                    </div>
+                                                </div>
+                                            @endif
                                         </div>
 
-                                        <div class="d-flex flex-column gap-2">
-                                            <div class="fw-medium">{{translate('Booking Request Time')}} : <span
-                                                    class="fw-bold">{{$post->created_at->format('d/m/Y h:ia')}}</span>
+                                        <div class="p-3 rounded border d-flex flex-column gap-2 mt-2"
+                                             style="background: rgba(var(--c1-rgb, 4, 97, 68), 0.05);">
+                                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 fs-13">
+                                                <div class="d-flex align-items-center gap-2 text-muted">
+                                                    <span class="material-icons text-primary fs-16">schedule</span>
+                                                    <span>{{translate('Booking Request Time')}}</span>
+                                                </div>
+                                                <span class="fw-bold">{{$post->created_at->format('d/m/Y h:ia')}}</span>
                                             </div>
-                                            <div class="fw-medium">{{translate('Service Time')}} : <span
-                                                    class="fw-bold">{{date('d/m/Y h:ia',strtotime($post->booking_schedule))}}</span>
+                                            <div class="border-top pt-2 d-flex align-items-center justify-content-between flex-wrap gap-2 fs-13">
+                                                <div class="d-flex align-items-center gap-2 text-muted">
+                                                    <span class="material-icons text-success fs-16">event</span>
+                                                    <span>{{translate('Service Scheduled Time')}}</span>
+                                                </div>
+                                                <span class="fw-bold text-success">{{date('d/m/Y h:ia',strtotime($post->booking_schedule))}}</span>
                                             </div>
                                         </div>
                                     </div>

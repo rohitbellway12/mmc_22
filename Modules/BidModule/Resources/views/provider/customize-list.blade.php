@@ -185,10 +185,18 @@
                                             </td>
                                             <td>
                                                 @if($post->category)
-                                                    {{$post->category?->name}}
+                                                    <div class="fw-medium text-dark">{{$post->category?->name}}</div>
                                                 @else
-                                                    <div><small class="disabled">
-                                                            {{translate('Category not available')}}</small></div>
+                                                    <div><small class="disabled">{{translate('Category not available')}}</small></div>
+                                                @endif
+                                                @if($post->services && $post->services->count() > 0)
+                                                    <div class="d-flex flex-wrap gap-1 mt-1">
+                                                        @foreach($post->services as $s)
+                                                            <span class="badge bg-light text-primary border" style="font-size: 11px;" title="{{$s->name}}">{{Str::limit($s->name, 22)}}</span>
+                                                        @endforeach
+                                                    </div>
+                                                @elseif($post->service)
+                                                    <div class="text-muted fs-12 mt-1">{{Str::limit($post->service->name, 25)}}</div>
                                                 @endif
                                             </td>
                                             @if($bid_offers_visibility_for_providers)

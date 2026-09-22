@@ -188,7 +188,7 @@ class PostController extends Controller
     public function details($post_id): Renderable|RedirectResponse
     {
         $post = $this->post
-            ->with(['bids', 'addition_instructions', 'service', 'category', 'sub_category', 'booking', 'customer'])
+            ->with(['bids', 'addition_instructions', 'service', 'services.category', 'services.subCategory', 'category', 'sub_category', 'booking', 'customer'])
             ->where('id', $post_id)
             ->first();
 
@@ -203,7 +203,7 @@ class PostController extends Controller
         }
 
         if (!isset($post)) {
-            Toastr::success(translate(DEFAULT_404['message']));
+            Toastr::error(translate(DEFAULT_404['message']));
             return back();
         }
 

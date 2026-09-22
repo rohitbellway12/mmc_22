@@ -15,6 +15,7 @@ use Modules\CustomerModule\Traits\CustomerAddressTrait;
 use Modules\ProviderManagement\Entities\Provider;
 use Modules\ProviderManagement\Entities\SubscribedService;
 use Modules\BidModule\Entities\PostProvider;
+use Modules\BidModule\Entities\PostService;
 use Modules\ServiceManagement\Entities\Service;
 use Ramsey\Uuid\Uuid;
 use function response;
@@ -53,7 +54,7 @@ class PostController extends Controller
 
         $biddingPostValidity = (int)(business_config('bidding_post_validity', 'bidding_system'))->live_values;
         $posts = $this->post
-            ->with(['addition_instructions', 'service', 'category', 'sub_category', 'booking', 'targeted_providers'])
+            ->with(['addition_instructions', 'service', 'services', 'category', 'sub_category', 'booking', 'targeted_providers'])
             ->withCount(['bids' => function ($query) {
                 $query->where('status', 'pending');
             }])
@@ -83,7 +84,7 @@ class PostController extends Controller
     public function show($postId, Request $request): JsonResponse
     {
         $post = $this->post
-            ->with(['addition_instructions', 'service', 'category', 'sub_category', 'booking', 'service_address', 'targeted_providers'])
+            ->with(['addition_instructions', 'service', 'services', 'category', 'sub_category', 'booking', 'service_address', 'targeted_providers'])
             ->withCount(['bids'])
             ->where('id', $postId)
             ->where('customer_user_id', $request->user()->id)
@@ -115,7 +116,9 @@ class PostController extends Controller
         $validator = Validator::make($request->all(), [
             'service_description' => 'required',
             'booking_schedule' => 'required|date',
-            'service_id' => 'required|uuid',
+            'service_id' => 'required_without:service_ids|uuid',
+            'service_ids' => 'nullable|array',
+            'service_ids.*' => 'uuid',
             'category_id' => 'required|uuid',
             'sub_category_id' => 'nullable|uuid',
             'provider_ids' => 'nullable|array',
@@ -155,9 +158,19 @@ class PostController extends Controller
             $request['service_address_id'] = $this->add_address(json_decode($request['service_address']), $request->user()->id);
         }
 
+        // Resolve service IDs (supports single service_id or multiple service_ids[])
+        $serviceIds = [];
+        if ($request->has('service_ids') && is_array($request['service_ids'])) {
+            $serviceIds = array_values(array_unique(array_filter($request['service_ids'])));
+        }
+        if (!empty($request['service_id']) && !in_array($request['service_id'], $serviceIds)) {
+            array_unshift($serviceIds, $request['service_id']);
+        }
+        $primaryServiceId = $request['service_id'] ?? ($serviceIds[0] ?? null);
+
         $subCategoryId = $request['sub_category_id'];
         if (empty($subCategoryId)) {
-            $service = Service::withoutGlobalScopes()->find($request['service_id']);
+            $service = Service::withoutGlobalScopes()->find($primaryServiceId);
             $subCategoryId = $service?->sub_category_id ?? $request['category_id'];
         }
 
@@ -165,7 +178,7 @@ class PostController extends Controller
         $post->service_description = $request['service_description'];
         $post->booking_schedule = $request['booking_schedule'];
         $post->customer_user_id = $request->user()->id;
-        $post->service_id = $request['service_id'];
+        $post->service_id = $primaryServiceId;
         $post->category_id = $request['category_id'];
         $post->sub_category_id = $subCategoryId;
         $post->service_address_id = $request['service_address_id'];
@@ -180,6 +193,20 @@ class PostController extends Controller
         }
 
         $post->save();
+
+        // Save multiple services in post_services pivot table
+        if (!empty($serviceIds)) {
+            $postServices = [];
+            foreach ($serviceIds as $sId) {
+                $postServices[] = [
+                    'post_id' => $post->id,
+                    'service_id' => $sId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+            PostService::insert($postServices);
+        }
 
         // Handle targeted providers
         $hasTargetedProviders = false;

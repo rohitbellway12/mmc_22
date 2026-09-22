@@ -89,4 +89,19 @@ class Post extends Model
             'provider_id'
         );
     }
+
+    public function post_services(): HasMany
+    {
+        return $this->hasMany(PostService::class, 'post_id', 'id');
+    }
+
+    public function services(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(
+            Service::class,
+            'post_services',
+            'post_id',
+            'service_id'
+        );
+    }
 }
