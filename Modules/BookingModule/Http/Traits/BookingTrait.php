@@ -802,6 +802,9 @@ trait BookingTrait
                 }
             }
 
+            $booking->booking_type = $request->booking_type ?? 'normal';
+            $booking->selected_slot_id = $request->selected_slot_id;
+
             $booking->save();
 
             // Question Answers
