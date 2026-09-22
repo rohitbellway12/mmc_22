@@ -6648,4 +6648,12 @@ _Message' => 'Customer notification for provider bid offer
   'Service Scheduled Time' => 'Service Scheduled Time',
   'Quotation sent to customer successfully!' => 'Quotation sent to customer successfully!',
   'The service address field is required.' => 'The service address field is required.',
+  'Car Hire & Chauffeur' => 'Car Hire & Chauffeur',
+  'Car Hire Setup' => 'Car Hire Setup',
+  'Car Types' => 'Car Types',
+  'Car Brands' => 'Car Brands',
+  'Car Models' => 'Car Models',
+  'Car Years' => 'Car Years',
+  'Car Type' => 'Car Type',
+  'Select Car Type' => 'Select Car Type',
 );

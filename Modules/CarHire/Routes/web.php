@@ -49,4 +49,16 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin']],
             Route::post('status-update/{id}', [AdminCarBookingController::class, 'statusUpdate'])->name('status-update');
         });
     });
+
+    // Car Types Management
+    Route::group(['prefix' => 'car-types', 'as' => 'car-types.'], function () {
+        Route::get('/', [CarTypeController::class, 'index'])->name('index');
+        Route::get('create', [CarTypeController::class, 'create'])->name('create');
+        Route::post('store', [CarTypeController::class, 'store'])->name('store');
+        Route::get('edit/{id}', [CarTypeController::class, 'edit'])->name('edit');
+        Route::put('update/{id}', [CarTypeController::class, 'update'])->name('update');
+        Route::post('update/{id}', [CarTypeController::class, 'update']);
+        Route::delete('delete/{id}', [CarTypeController::class, 'destroy'])->name('delete');
+        Route::get('status/{id}', [CarTypeController::class, 'toggleStatus'])->name('status');
+    });
 });

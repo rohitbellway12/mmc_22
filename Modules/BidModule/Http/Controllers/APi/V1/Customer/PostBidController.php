@@ -173,6 +173,7 @@ class PostBidController extends Controller
         }
 
         $data = [
+            'post_id' => $postBid->post_id,
             'payment_method' => 'cash_after_service',
             'zone_id' => config('zone_id'),
             'service_tax' => $postBid?->post?->service?->tax,

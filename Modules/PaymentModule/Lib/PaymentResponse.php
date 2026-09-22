@@ -66,6 +66,7 @@ class PaymentResponse
                 ->first();
 
             $data = [
+                'post_id' => $request['post_id'],
                 'payment_method' => $request['payment_method'],
                 'zone_id' => $request['zone_id'],
                 'service_tax' => $post_bid?->post?->service?->tax,

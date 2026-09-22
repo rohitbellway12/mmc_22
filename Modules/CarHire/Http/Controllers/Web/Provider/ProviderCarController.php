@@ -95,6 +95,7 @@ class ProviderCarController extends Controller
         $rules = [
             'service_category' => 'required|in:car_hire,chauffeur',
             'category_id' => 'required',
+            'car_type_id' => 'required',
             'brand' => 'required|string',
             'pricing_type' => 'required|in:both,hourly,daily',
             'registration_number' => 'nullable|string',
@@ -240,6 +241,7 @@ class ProviderCarController extends Controller
         $rules = [
             'service_category' => 'required|in:car_hire,chauffeur',
             'category_id' => 'required',
+            'car_type_id' => 'required',
             'brand' => 'required|string',
             'pricing_type' => 'required|in:both,hourly,daily',
             'registration_number' => 'nullable|string',

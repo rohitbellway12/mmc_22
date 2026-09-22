@@ -752,6 +752,25 @@ trait BookingTrait
 
             $totalBookingAmount += $extraFee;
 
+            // Retrieve all services for this bidding post (support multiple services)
+            $postServices = collect([]);
+            $postId = $data['post_id'] ?? ($request['post_id'] ?? null);
+            $biddingPost = null;
+            if ($postId) {
+                $biddingPost = \Modules\BidModule\Entities\Post::with(['services'])->find($postId);
+                if ($biddingPost && $biddingPost->services->isNotEmpty()) {
+                    $postServices = $biddingPost->services;
+                }
+            }
+
+            // Fallback to single primary service if no multi-services found
+            if ($postServices->isEmpty() && !empty($data['service_id'])) {
+                $singleService = Service::withoutGlobalScopes()->find($data['service_id']);
+                if ($singleService) {
+                    $postServices = collect([$singleService]);
+                }
+            }
+
             $booking->customer_id = $customerUserId;
             $booking->provider_id = $data['provider_id'];
             $booking->category_id = $data['category_id'];
@@ -759,7 +778,6 @@ trait BookingTrait
             $booking->zone_id = $data['zone_id'];
             $booking->booking_status = 'accepted';
             $booking->is_paid = $data['payment_method'] == 'cash_after_service' || $request['payment_method'] == 'offline_payment' ? 0 : 1;
-            ;
             $booking->payment_method = $data['payment_method'];
             $booking->transaction_id = $transactionId;
             $booking->total_booking_amount = $totalBookingAmount;
@@ -773,6 +791,17 @@ trait BookingTrait
             $booking->is_guest = 0;
             $booking->extra_fee = $extraFee;
             $booking->total_referral_discount_amount = $referralDiscount;
+
+            // Vehicle and damage details from bidding post
+            if ($biddingPost) {
+                $booking->car_model = $booking->car_model ?? $biddingPost->car_model;
+                $booking->car_registration_number = $booking->car_registration_number ?? $biddingPost->car_registration_number;
+                $booking->damage_description = $booking->damage_description ?? $biddingPost->damage_description;
+                if (!empty($biddingPost->car_image) && empty($booking->evidence_photos)) {
+                    $booking->evidence_photos = is_array($biddingPost->car_image) ? $biddingPost->car_image : [$biddingPost->car_image];
+                }
+            }
+
             $booking->save();
 
             // Question Answers
@@ -815,34 +844,54 @@ trait BookingTrait
                 }
             }
 
-            $detail = new BookingDetail();
-            $detail->booking_id = $booking->id;
-            $detail->service_id = $data['service_id'];
-            $detail->service_name = Service::find($data['service_id'])->name ?? 'service-not-found';
-            $detail->variant_key = null;
-            $detail->quantity = 1;
-            $detail->service_cost = $data['price'];
-            $detail->discount_amount = 0;
-            $detail->campaign_discount_amount = 0;
-            $detail->overall_coupon_discount_amount = 0;
-            $detail->tax_amount = $tax;
-            $detail->total_cost = $totalBookingAmount;
-            $detail->save();
+            $serviceCount = max(1, $postServices->count());
+            $allocatedPrice = 0;
+            $allocatedTax = 0;
 
-            $bookingDetailsAmount = new BookingDetailsAmount();
-            $bookingDetailsAmount->booking_details_id = $detail->id;
-            $bookingDetailsAmount->booking_id = $booking->id;
-            $bookingDetailsAmount->service_unit_cost = $data['price'];
-            $bookingDetailsAmount->service_quantity = 1;
-            $bookingDetailsAmount->service_tax = $tax;
-            $bookingDetailsAmount->discount_by_admin = 0;
-            $bookingDetailsAmount->discount_by_provider = 0;
-            $bookingDetailsAmount->campaign_discount_by_admin = 0;
-            $bookingDetailsAmount->campaign_discount_by_provider = 0;
-            $bookingDetailsAmount->coupon_discount_by_admin = 0;
-            $bookingDetailsAmount->coupon_discount_by_provider = 0;
-            $bookingDetailsAmount->admin_commission = 0;
-            $bookingDetailsAmount->save();
+            foreach ($postServices as $index => $srvItem) {
+                $isLast = ($index === $serviceCount - 1);
+
+                if ($isLast) {
+                    $itemPrice = round($data['price'] - $allocatedPrice, 2);
+                    $itemTax = round($tax - $allocatedTax, 2);
+                } else {
+                    $itemPrice = round($data['price'] / $serviceCount, 2);
+                    $itemTax = round($tax / $serviceCount, 2);
+                    $allocatedPrice += $itemPrice;
+                    $allocatedTax += $itemTax;
+                }
+
+                $itemTotalCost = $itemPrice + $itemTax;
+
+                $detail = new BookingDetail();
+                $detail->booking_id = $booking->id;
+                $detail->service_id = $srvItem->id;
+                $detail->service_name = $srvItem->name ?? 'Customized Service';
+                $detail->variant_key = null;
+                $detail->quantity = 1;
+                $detail->service_cost = $itemPrice;
+                $detail->discount_amount = 0;
+                $detail->campaign_discount_amount = 0;
+                $detail->overall_coupon_discount_amount = 0;
+                $detail->tax_amount = $itemTax;
+                $detail->total_cost = $itemTotalCost;
+                $detail->save();
+
+                $bookingDetailsAmount = new BookingDetailsAmount();
+                $bookingDetailsAmount->booking_details_id = $detail->id;
+                $bookingDetailsAmount->booking_id = $booking->id;
+                $bookingDetailsAmount->service_unit_cost = $itemPrice;
+                $bookingDetailsAmount->service_quantity = 1;
+                $bookingDetailsAmount->service_tax = $itemTax;
+                $bookingDetailsAmount->discount_by_admin = 0;
+                $bookingDetailsAmount->discount_by_provider = 0;
+                $bookingDetailsAmount->campaign_discount_by_admin = 0;
+                $bookingDetailsAmount->campaign_discount_by_provider = 0;
+                $bookingDetailsAmount->coupon_discount_by_admin = 0;
+                $bookingDetailsAmount->coupon_discount_by_provider = 0;
+                $bookingDetailsAmount->admin_commission = 0;
+                $bookingDetailsAmount->save();
+            }
 
             $schedule = new BookingScheduleHistory();
             $schedule->booking_id = $booking->id;

@@ -468,13 +468,13 @@ $logo = getBusinessSettingsImageFullPath(key: 'business_logo', settingType: 'bus
                 </li>
             @endcanany
 
-            {{-- carhire removed --}}
-
-
-
-
-
-
+            <li>
+                <a href="{{ route('admin.car-types.index') }}"
+                    class="{{ request()->is('admin/car-types*') ? 'active-menu' : '' }}">
+                    <span class="material-icons" title="{{ translate('Car Types') }}">directions_car</span>
+                    <span class="link-title">{{ translate('Car Types') }}</span>
+                </a>
+            </li>
 
 
             @canany(['wallet_add', 'wallet_view', 'customer_view', 'customer_add', 'point_view', 'newsletter_view'])

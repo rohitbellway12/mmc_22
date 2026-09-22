@@ -94,12 +94,24 @@
                         @csrf
                         @method('PUT')
                         <input type="hidden" name="service_category" value="chauffeur">
-                        <input type="hidden" name="category_id" value="{{ $car->category_id }}">
+                        <input type="hidden" name="category_id" value="{{ $categories->firstWhere('name', 'Chauffeur')?->id ?? ($car->category_id ?? 'fd6a04cf-3803-4a9b-a830-6cfa9c3c48d4') }}">
                         <input type="hidden" name="pricing_type" value="{{ $car->pricing_type }}" id="pricing_type_hidden">
 
                         <div class="row">
                             <div class="col-md-6">
                                 <h4 class="form-section-title">{{ translate('Basic Information') }}</h4>
+
+                                <div class="form-group mb-3">
+                                    <label class="form-label mb-2">{{ translate('Car Type') }} <span class="text-danger">*</span></label>
+                                    <select name="car_type_id" class="form-control" required>
+                                        <option value="" disabled>{{ translate('Select Car Type') }}</option>
+                                        @foreach ($types as $type)
+                                            <option value="{{ $type->id }}" {{ (old('car_type_id', $car->car_type_id) == $type->id) ? 'selected' : '' }}>
+                                                {{ $type->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
 
                                 <div class="form-group mb-3">
                                     <label class="form-label mb-2">{{ translate('Car Brand/Model') }}</label>
