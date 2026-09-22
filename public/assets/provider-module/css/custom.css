@@ -1,0 +1,50 @@
+/* Premium Gold Theme Overrides - Provider Panel */
+:root, [data-bs-theme=light], [data-bs-theme=dark], body {
+    --bs-primary: #FAD293 !important;
+    --bs-primary-rgb: 250, 210, 147 !important;
+    --bs-primary-dark: #D4A76A !important;
+    --bs-primary-light-bg: rgba(250, 210, 147, 0.1) !important;
+    --c1: #FAD293 !important;
+}
+
+/* Force Gold on primary text and links */
+.c1, .text-primary, .link-color {
+    color: #FAD293 !important;
+}
+
+/* Sidebar & Nav Overrides */
+.aside-body .nav li.active > a, 
+.aside-body .nav li.active > .link-title,
+.aside-body .nav li:hover > a,
+.aside-body .nav li.active > a .material-icons,
+.aside-body .nav li:hover > a .material-icons {
+    color: #FAD293 !important;
+}
+
+/* Primary Color Utilities & Buttons */
+.c1-bg, .btn-primary, .btn--primary, .bg-primary {
+    background-color: #FAD293 !important;
+    border-color: #FAD293 !important;
+    color: #000 !important; /* Premium dark text on gold */
+}
+
+.btn-primary:hover, .btn--primary:hover {
+    background-color: #D4A76A !important;
+    border-color: #D4A76A !important;
+    color: #000 !important;
+}
+
+/* Accent Fixes */
+.navbar-vertical .nav-link.active {
+    border-left: 3px solid #FAD293 !important;
+}
+
+/* Scrollbar Fix */
+::-webkit-scrollbar-thumb {
+    background: #FAD293 !important;
+}
+
+/* Accent Fixes */
+.navbar-vertical .nav-link.active {
+    border-left-color: #FAD293 !important;
+}

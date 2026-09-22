@@ -1,0 +1,26 @@
+/* Table Visibility Fix for Light Mode - Enhanced */
+[data-bs-theme=light] .table,
+[data-bs-theme=light] .table *,
+body:not([data-bs-theme=dark]) .table,
+body:not([data-bs-theme=dark]) .table * {
+    color: #18181a !important; /* Force a dark color (#18181a is --bs-dark) */
+}
+
+/* Ensure backgrounds are light enough for the dark text */
+[data-bs-theme=light] .table thead th,
+body:not([data-bs-theme=dark]) .table thead th {
+    background-color: #EFF1F4 !important; /* From style.css standard --bg-color */
+}
+
+[data-bs-theme=light] .table td,
+body:not([data-bs-theme=dark]) .table td {
+    background-color: #ffffff !important;
+}
+
+/* Reset buttons text to white */
+[data-bs-theme=light] .table .btn,
+[data-bs-theme=light] .table .btn *,
+body:not([data-bs-theme=dark]) .table .btn,
+body:not([data-bs-theme=dark]) .table .btn * {
+    color: #ffffff !important;
+}

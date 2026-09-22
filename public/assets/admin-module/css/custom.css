@@ -1,0 +1,59 @@
+/* Premium Gold Theme Overrides */
+:root, [data-bs-theme=light], [data-bs-theme=dark], body {
+    --bs-primary: #FAD293 !important;
+    --bs-primary-rgb: 250, 210, 147 !important;
+    --bs-primary-dark: #D4A76A !important;
+    --c1: #FAD293 !important;
+    --c2: #FAD293 !important;
+    --bs-primary-light-bg: rgba(250, 210, 147, 0.1) !important;
+}
+
+/* Force Gold on all elements using primary color classes */
+.c1, .text-primary, .link-color, .link-color-bg {
+    color: #FAD293 !important;
+}
+
+.c1-bg, .bg-primary, .link-color-bg {
+    background-color: #FAD293 !important;
+}
+
+.c1-bo, .border-primary, .link-color-bo {
+    border-color: #FAD293 !important;
+}
+
+/* Sidebar Active State Fix */
+.aside-body .nav li.active > a,
+.aside-body .nav li.active > .link-title,
+.aside-body .nav li:hover > a,
+.aside-body .nav li.active > a .material-icons,
+.aside-body .nav li:hover > a .material-icons {
+    color: #FAD293 !important;
+}
+
+/* Button Overrides */
+.btn-primary, .btn--primary, .c1-bg, .btn-primary:focus, .btn-primary:active {
+    background-color: #FAD293 !important;
+    border-color: #FAD293 !important;
+    color: #000 !important;
+}
+
+.btn-primary:hover, .btn--primary:hover {
+    background-color: #D4A76A !important;
+    border-color: #D4A76A !important;
+    color: #000 !important;
+}
+
+/* Scrollbar/Accent Fixes */
+::-webkit-scrollbar-thumb {
+    background: #FAD293 !important;
+}
+
+.navbar-vertical .nav-link.active {
+    border-left: 3px solid #FAD293 !important;
+}
+
+/* Toastr customization */
+#toast-container > .toast-success {
+    background-color: #FAD293 !important;
+    color: #000 !important;
+}
