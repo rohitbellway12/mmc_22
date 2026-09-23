@@ -228,6 +228,13 @@ class LoginController extends Controller
         }
 
         $this->updateAddressAndCartUser($user->id, $request['guest_id']);
+
+        // Save FCM token if provided
+        if ($request->filled('fcm_token')) {
+            $user->fcm_token = $request->fcm_token;
+            $user->save();
+        }
+
         return response()->json(response_formatter(AUTH_LOGIN_200, self::authenticate($user, CUSTOMER_PANEL_ACCESS)), 200);
     }
 
@@ -286,6 +293,12 @@ class LoginController extends Controller
                 ->where('identity_type', $identityType)
                 ->where(['otp' => $request['otp']])
                 ->delete();
+
+            // Save FCM token if provided
+            if ($request->filled('fcm_token')) {
+                $user->fcm_token = $request->fcm_token;
+                $user->save();
+            }
 
             return response()->json(response_formatter(AUTH_LOGIN_200, self::authenticate($user, PROVIDER_PANEL_ACCESS)), 200);
         }
@@ -468,6 +481,11 @@ class LoginController extends Controller
     strtolower($identity) === 'mmc@gmail.com' &&
     $request->otp === '1234'
 ) {
+    // Save FCM token if provided
+    if ($request->filled('fcm_token')) {
+        $user->fcm_token = $request->fcm_token;
+        $user->save();
+    }
     return response()->json(
         response_formatter(
             AUTH_LOGIN_200,
@@ -491,6 +509,12 @@ class LoginController extends Controller
                     ->where('identity_type', $identityType)
                     ->where(['otp' => $request['otp']])
                     ->delete();
+
+                // Save FCM token if provided
+                if ($request->filled('fcm_token')) {
+                    $user->fcm_token = $request->fcm_token;
+                    $user->save();
+                }
 
                 return response()->json(response_formatter(AUTH_LOGIN_200, self::authenticate($user, CUSTOMER_PANEL_ACCESS)), 200);
             }

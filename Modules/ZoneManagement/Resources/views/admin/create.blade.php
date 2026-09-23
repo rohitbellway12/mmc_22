@@ -16,6 +16,40 @@
         #pac-container input {
             width: 100%;
         }
+
+        /* Zone Table Light & Dark Mode Support */
+        .table thead th {
+            color: var(--bs-dark, #18181a) !important;
+            background-color: var(--bs-light, #f8f9fa) !important;
+            font-weight: 600;
+        }
+        .table tbody td {
+            color: var(--bs-body-color, #333333) !important;
+        }
+        .table tbody tr:hover td {
+            color: var(--bs-dark, #18181a) !important;
+        }
+
+        /* Dark Mode Overrides */
+        [data-bs-theme="dark"] .table,
+        body[data-bs-theme="dark"] .table {
+            --bs-table-color: rgba(255, 255, 255, 0.9) !important;
+            --bs-table-bg: transparent !important;
+            --bs-table-border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        [data-bs-theme="dark"] .table thead th,
+        body[data-bs-theme="dark"] .table thead th {
+            color: #ffffff !important;
+            background-color: rgba(255, 255, 255, 0.05) !important;
+        }
+        [data-bs-theme="dark"] .table tbody td,
+        body[data-bs-theme="dark"] .table tbody td {
+            color: rgba(255, 255, 255, 0.85) !important;
+        }
+        [data-bs-theme="dark"] .title-color,
+        body[data-bs-theme="dark"] .title-color {
+            color: rgba(255, 255, 255, 0.9) !important;
+        }
     </style>
 @endpush
 

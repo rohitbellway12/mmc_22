@@ -6666,4 +6666,7 @@ _Message' => 'Customer notification for provider bid offer
   'Quotation-Based Category' => 'Quotation-Based Category',
   'Services in this category do not have fixed upfront prices. Customers submit vehicle details and damage or modification photos first. When new requests arrive, you will receive notifications and can submit your price quotation under' => 'Services in this category do not have fixed upfront prices. Customers submit vehicle details and damage or modification photos first. When new requests arrive, you will receive notifications and can submit your price quotation under',
   'Booking Management > Customized Requests' => 'Booking Management   Customized Requests',
+  'e.g., Please enter your tyre size' => 'E.g., Please enter your tyre size',
+  'e.g., Option 1, Option 2, Option 3' => 'E.g., Option 1, Option 2, Option 3',
+  'Question' => 'Question',
 );

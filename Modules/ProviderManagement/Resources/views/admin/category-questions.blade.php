@@ -4,12 +4,131 @@
 
 @push('css_or_js')
     <style>
-        .question-card {
-            transition: all 0.3s ease;
+        /* Form & Card Base Styles */
+        .card {
+            border-radius: 10px;
+            border: 1px solid var(--border-color, #EFF1F4);
+        }
+        .form-label, label {
+            color: var(--bs-dark, #18181a);
+            font-weight: 500;
         }
 
-        .question-card:hover {
-            box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.1);
+        /* Table Light Mode */
+        .table thead th {
+            color: var(--bs-dark, #18181a) !important;
+            background-color: var(--bs-light, #f8f9fa) !important;
+            font-weight: 600;
+        }
+        .table tbody td {
+            color: var(--bs-body-color, #333333) !important;
+        }
+        .table tbody tr:hover td {
+            color: var(--bs-dark, #18181a) !important;
+        }
+
+        /* Badge Soft Overrides */
+        .badge-soft-info {
+            background-color: rgba(13, 202, 240, 0.12) !important;
+            color: #0dcaf0 !important;
+            font-weight: 500;
+        }
+        .badge-soft-primary {
+            background-color: rgba(65, 83, 179, 0.12) !important;
+            color: #4153B3 !important;
+            font-weight: 500;
+        }
+        .badge-soft-danger {
+            background-color: rgba(220, 53, 69, 0.12) !important;
+            color: #dc3545 !important;
+            font-weight: 500;
+        }
+        .badge-soft-secondary {
+            background-color: rgba(108, 117, 125, 0.12) !important;
+            color: #6c757d !important;
+            font-weight: 500;
+        }
+
+        /* Complete Dark Mode Overrides */
+        [data-bs-theme="dark"],
+        body[data-bs-theme="dark"] {
+            --card-bg-dark: #232325;
+            --input-bg-dark: #2c2d32;
+            --border-dark: #3a3b40;
+        }
+        [data-bs-theme="dark"] .page-title,
+        body[data-bs-theme="dark"] .page-title {
+            color: #ffffff !important;
+        }
+        [data-bs-theme="dark"] .card,
+        body[data-bs-theme="dark"] .card {
+            background-color: #232325 !important;
+            border-color: #3a3b40 !important;
+        }
+        [data-bs-theme="dark"] .card-header,
+        body[data-bs-theme="dark"] .card-header {
+            background-color: rgba(255, 255, 255, 0.03) !important;
+            border-bottom-color: #3a3b40 !important;
+        }
+        [data-bs-theme="dark"] .card-title,
+        body[data-bs-theme="dark"] .card-title {
+            color: #ffffff !important;
+        }
+        [data-bs-theme="dark"] label,
+        body[data-bs-theme="dark"] label {
+            color: rgba(255, 255, 255, 0.9) !important;
+        }
+        [data-bs-theme="dark"] .form-control,
+        [data-bs-theme="dark"] .form-select,
+        body[data-bs-theme="dark"] .form-control,
+        body[data-bs-theme="dark"] .form-select {
+            background-color: #2c2d32 !important;
+            border-color: #4a4b50 !important;
+            color: #ffffff !important;
+        }
+        [data-bs-theme="dark"] .form-control::placeholder,
+        body[data-bs-theme="dark"] .form-control::placeholder {
+            color: #888888 !important;
+        }
+        [data-bs-theme="dark"] .form-select option,
+        body[data-bs-theme="dark"] .form-select option {
+            background-color: #232325 !important;
+            color: #ffffff !important;
+        }
+        [data-bs-theme="dark"] .table,
+        body[data-bs-theme="dark"] .table {
+            --bs-table-color: rgba(255, 255, 255, 0.9) !important;
+            --bs-table-bg: transparent !important;
+            --bs-table-border-color: rgba(255, 255, 255, 0.08) !important;
+        }
+        [data-bs-theme="dark"] .table thead th,
+        body[data-bs-theme="dark"] .table thead th {
+            color: #ffffff !important;
+            background-color: rgba(255, 255, 255, 0.05) !important;
+        }
+        [data-bs-theme="dark"] .table tbody td,
+        body[data-bs-theme="dark"] .table tbody td {
+            color: rgba(255, 255, 255, 0.85) !important;
+        }
+        [data-bs-theme="dark"] .title-color,
+        body[data-bs-theme="dark"] .title-color {
+            color: rgba(255, 255, 255, 0.9) !important;
+        }
+        [data-bs-theme="dark"] .text-muted,
+        body[data-bs-theme="dark"] .text-muted {
+            color: #94a3b8 !important;
+        }
+        [data-bs-theme="dark"] .badge-soft-primary {
+            background-color: rgba(65, 83, 179, 0.25) !important;
+            color: #98a5f3 !important;
+        }
+        [data-bs-theme="dark"] .badge-soft-info {
+            background-color: rgba(13, 202, 240, 0.25) !important;
+            color: #6edff6 !important;
+        }
+        [data-bs-theme="dark"] .badge-soft-secondary {
+            background-color: rgba(148, 163, 184, 0.2) !important;
+            color: #cbd5e1 !important;
         }
     </style>
 @endpush
@@ -27,31 +146,29 @@
                     </div>
 
                     <!-- Add New Question Card -->
-                    <div class="card mb-3">
-                        <div class="card-header">
-                            <h5 class="card-title">
-                                <span class="material-icons">add_circle</span>
+                    <div class="card mb-30">
+                        <div class="card-header py-3">
+                            <h5 class="card-title d-flex align-items-center gap-2 mb-0">
+                                <span class="material-icons text-primary">add_circle</span>
                                 {{ translate('Add_New_Global_Question') }}
                             </h5>
                         </div>
-                        <div class="card-body">
+                        <div class="card-body p-30">
                             <form id="question-form">
                                 @csrf
-                                <div class="row">
+                                <div class="row g-3">
                                     <div class="col-md-5">
-                                        <div class="form-group">
-                                            <label>{{ translate('Question_Text') }} <span
-                                                    class="text-danger">*</span></label>
+                                        <div class="form-group mb-0">
+                                            <label class="form-label mb-2">{{ translate('Question_Text') }} <span class="text-danger">*</span></label>
                                             <textarea name="question_text" id="question_text" class="form-control" rows="2"
-                                                placeholder="e.g., Please enter your tyre size" required></textarea>
+                                                placeholder="{{ translate('e.g., Please enter your tyre size') }}" required></textarea>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
-                                        <div class="form-group">
-                                            <label>{{ translate('Category') }} <span class="text-danger">*</span></label>
-                                            <select name="category_id" id="category_id" class="form-control" required>
-                                                <option value="" disabled selected>{{ translate('Select_Category') }}
-                                                </option>
+                                        <div class="form-group mb-0">
+                                            <label class="form-label mb-2">{{ translate('Category') }} <span class="text-danger">*</span></label>
+                                            <select name="category_id" id="category_id" class="form-control form-select" required>
+                                                <option value="" disabled selected>{{ translate('Select_Category') }}</option>
                                                 @foreach ($categories as $category)
                                                     <option value="{{ $category->id }}">{{ $category->name }}</option>
                                                 @endforeach
@@ -59,10 +176,9 @@
                                         </div>
                                     </div>
                                     <div class="col-md-2">
-                                        <div class="form-group">
-                                            <label>{{ translate('Question_Type') }} <span
-                                                    class="text-danger">*</span></label>
-                                            <select name="question_type" id="question_type" class="form-control" required>
+                                        <div class="form-group mb-0">
+                                            <label class="form-label mb-2">{{ translate('Question_Type') }} <span class="text-danger">*</span></label>
+                                            <select name="question_type" id="question_type" class="form-control form-select" required>
                                                 <option value="text">{{ translate('Text_Answer') }}</option>
                                                 <option value="yes_no">{{ translate('Yes/No') }}</option>
                                                 <option value="select">{{ translate('Select/Dropdown') }}</option>
@@ -71,26 +187,26 @@
                                         </div>
                                     </div>
                                     <div class="col-md-2">
-                                        <div class="form-group">
-                                            <label>{{ translate('Required') }}?</label>
-                                            <div class="custom-control custom-checkbox mt-2">
-                                                <input type="checkbox" class="custom-control-input" id="is_required"
-                                                    name="is_required" value="1" checked>
-                                                <label class="custom-control-label" for="is_required"></label>
+                                        <div class="form-group mb-0">
+                                            <label class="form-label mb-2 d-block">{{ translate('Required') }}?</label>
+                                            <div class="pt-2">
+                                                <label class="switcher">
+                                                    <input type="checkbox" class="switcher_input" id="is_required" name="is_required" value="1" checked>
+                                                    <span class="switcher_control"></span>
+                                                </label>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div class="col-12 mt-3 d-none" id="options_section">
-                                        <div class="form-group">
-                                            <label>{{ translate('Options') }} ({{ translate('Comma separated') }}) <span
-                                                    class="text-danger">*</span></label>
+                                    <div class="col-12 d-none" id="options_section">
+                                        <div class="form-group mb-0">
+                                            <label class="form-label mb-2">{{ translate('Options') }} ({{ translate('Comma separated') }}) <span class="text-danger">*</span></label>
                                             <input type="text" name="options" id="options" class="form-control"
-                                                placeholder="e.g., Option 1, Option 2, Option 3">
+                                                placeholder="{{ translate('e.g., Option 1, Option 2, Option 3') }}">
                                         </div>
                                     </div>
 
-                                    <div class="col-12 text-right mt-3">
+                                    <div class="col-12 text-end mt-4">
                                         <button type="submit" class="btn btn--primary px-4">
                                             {{ translate('Save_Question') }}
                                         </button>
@@ -100,22 +216,45 @@
                         </div>
                     </div>
 
-                    <!-- Questions List -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title">{{ translate('Standardized_Category_Questions') }}</h5>
+                    <!-- Questions List Table -->
+                    <div class="card mb-30">
+                        <div class="card-header py-3">
+                            <h5 class="card-title mb-0">{{ translate('Standardized_Category_Questions') }}</h5>
                         </div>
                         <div class="card-body">
-                            @forelse($questions as $question)
-                                <div class="question-card card mb-3">
-                                    <div class="card-body">
-                                        <div class="row align-items-center">
-                                            <div class="col-md-4">
-                                                <h6 class="mb-1">{{ $question->question_text }}</h6>
-                                                <div class="mt-2">
-                                                    <span class="badge badge-soft-info">
-                                                        <span class="material-icons"
-                                                            style="font-size: 14px; vertical-align: middle;">
+                            <div class="table-responsive">
+                                <table id="example" class="table align-middle">
+                                    <thead class="align-middle title-color">
+                                        <tr>
+                                            <th class="title-color">{{ translate('SL') }}</th>
+                                            <th class="title-color">{{ translate('Question') }}</th>
+                                            <th class="title-color">{{ translate('Category') }}</th>
+                                            <th class="title-color">{{ translate('Question_Type') }}</th>
+                                            <th class="title-color">{{ translate('Required') }}</th>
+                                            <th class="title-color">{{ translate('Status') }}</th>
+                                            <th class="title-color text-center">{{ translate('Action') }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($questions as $key => $question)
+                                            <tr>
+                                                <td class="title-color">{{ $questions->firstItem() + $key }}</td>
+                                                <td>
+                                                    <div class="fw-semibold title-color mb-1">{{ $question->question_text }}</div>
+                                                    @if ($question->question_type == 'select' && $question->options)
+                                                        <small class="text-muted d-block">
+                                                            <strong>{{ translate('Options') }}:</strong> {{ $question->options }}
+                                                        </small>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    <span class="badge badge-soft-info fs-12 px-2 py-1">
+                                                        {{ $question->category->name ?? translate('General') }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge badge-soft-primary fs-12 px-2 py-1 d-inline-flex align-items-center gap-1">
+                                                        <span class="material-icons fs-14">
                                                             @if ($question->question_type == 'yes_no')
                                                                 check_circle
                                                             @elseif($question->question_type == 'select')
@@ -128,53 +267,39 @@
                                                         </span>
                                                         {{ ucfirst(str_replace('_', ' ', $question->question_type)) }}
                                                     </span>
+                                                </td>
+                                                <td>
                                                     @if ($question->is_required)
-                                                        <span
-                                                            class="badge badge-soft-danger">{{ translate('Required') }}</span>
+                                                        <span class="badge badge-soft-danger px-2 py-1">{{ translate('Required') }}</span>
                                                     @else
-                                                        <span
-                                                            class="badge badge-soft-secondary">{{ translate('Optional') }}</span>
+                                                        <span class="badge badge-soft-secondary px-2 py-1">{{ translate('Optional') }}</span>
                                                     @endif
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3 text-center">
-                                                <small class="text-muted d-block">{{ translate('Category') }}</small>
-                                                <span class="badge badge-light border"
-                                                    style="color: white !important;">{{ $question->category->name ?? translate('General') }}</span>
-                                            </div>
-                                            <div class="col-md-2 text-center">
-                                                <small class="text-muted d-block">{{ translate('Display Order') }}</small>
-                                                <span class="badge badge-primary">#{{ $question->display_order }}</span>
-                                            </div>
-                                            <div class="col-md-2 text-center">
-                                                <small class="text-muted d-block">{{ translate('Status') }}</small>
-                                                <label class="switcher mx-auto">
-                                                    <input type="checkbox" class="switcher_input status-toggle"
-                                                        data-id="{{ $question->id }}"
-                                                        {{ $question->is_active ? 'checked' : '' }}>
-                                                    <span class="switcher_control"></span>
-                                                </label>
-                                            </div>
-                                            <div class="col-md-1 text-center">
-                                                <button type="button" class="btn btn-sm btn-outline-danger delete-question"
-                                                    data-id="{{ $question->id }}">
-                                                    <span class="material-icons">delete</span>
-                                                </button>
-                                            </div>
-                                            @if ($question->question_type == 'select' && $question->options)
-                                                <div class="col-12 mt-2">
-                                                    <small class="text-muted"><strong>{{ translate('Options') }}:</strong>
-                                                        {{ $question->options }}</small>
-                                                </div>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-                            @empty
-                                <div class="text-center py-5">
-                                    <p class="text-muted">{{ translate('No global questions added yet') }}</p>
-                                </div>
-                            @endforelse
+                                                </td>
+                                                <td>
+                                                    <label class="switcher">
+                                                        <input type="checkbox" class="switcher_input status-toggle"
+                                                            data-id="{{ $question->id }}"
+                                                            {{ $question->is_active ? 'checked' : '' }}>
+                                                        <span class="switcher_control"></span>
+                                                    </label>
+                                                </td>
+                                                <td class="text-center">
+                                                    <button type="button" class="action-btn btn--danger delete-question"
+                                                        data-id="{{ $question->id }}" style="--size: 30px">
+                                                        <span class="material-symbols-outlined">delete</span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="7" class="text-center py-4 text-muted">
+                                                    {{ translate('No global questions added yet') }}
+                                                </td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
 

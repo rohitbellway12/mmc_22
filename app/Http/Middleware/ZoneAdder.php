@@ -22,9 +22,10 @@ class ZoneAdder
     public function handle(Request $request, Closure $next)
     {
         if (request()->is('api/*/customer?*') || request()->is('api/*/customer/*')) {
-            Config::set('zone_id', $request->header('zoneid') ?? null);
-            if (preg_match('/^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i', Config::get('zone_id'))) {
-                $zone = Zone::ofStatus(1)->where('id', $request->header('zoneid'))->first();
+            $zoneId = $request->header('zoneid') ?? $request->header('zone-id') ?? $request->header('zone_id');
+            Config::set('zone_id', $zoneId ?? null);
+            if ($zoneId && preg_match('/^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i', $zoneId)) {
+                $zone = Zone::ofStatus(1)->where('id', $zoneId)->first();
                 if (!isset($zone)) {
                     return response()->json(response_formatter(ZONE_404), 401);
                 }
