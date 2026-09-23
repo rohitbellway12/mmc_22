@@ -1,10 +1,12 @@
 <?php
 $booking = \Modules\BookingModule\Entities\Booking::where('provider_id', auth()->user()->provider->id)->get();
 $maxBookingAmount = business_config('max_booking_amount', 'booking_setup')->live_values;
-$subscribed_sub_category_ids = \Modules\ProviderManagement\Entities\SubscribedService::where(['provider_id' => auth()->user()->provider->id])
+$subscribed_services_aside = \Modules\ProviderManagement\Entities\SubscribedService::where(['provider_id' => auth()->user()->provider->id])
     ->ofSubscription(1)
-    ->pluck('sub_category_id')
-    ->toArray();
+    ->get();
+$subscribed_sub_category_ids = $subscribed_services_aside->pluck('sub_category_id')->filter()->toArray();
+$subscribed_category_ids = $subscribed_services_aside->pluck('category_id')->filter()->toArray();
+$subscribed_service_ids = $subscribed_services_aside->pluck('service_id')->filter()->toArray();
 $serviceAtProviderPlace = (int) (business_config('service_at_provider_place', 'provider_config')->live_values ?? 0);
 $serviceLocations = getProviderSettings(providerId: auth()->user()->provider->id, key: 'service_location', type: 'provider_config') ?? ['customer'];
 
@@ -78,13 +80,17 @@ $logo = getBusinessSettingsImageFullPath(key: 'business_logo', settingType: 'bus
                         $posts = \Modules\BidModule\Entities\Post::where('is_booked', 0)
                             ->whereNotIn('id', $ignored_posts)
                             ->where('zone_id', auth()->user()->provider->zone_id)
-                            ->where(function ($query) use ($providerId, $subscribed_sub_category_ids) {
+                            ->where(function ($query) use ($providerId, $subscribed_sub_category_ids, $subscribed_category_ids, $subscribed_service_ids) {
                                 $query->whereHas('targeted_providers', function ($sub) use ($providerId) {
                                     $sub->where('provider_id', $providerId);
                                 })
-                                ->orWhere(function ($openQuery) use ($subscribed_sub_category_ids) {
+                                ->orWhere(function ($openQuery) use ($subscribed_sub_category_ids, $subscribed_category_ids, $subscribed_service_ids) {
                                     $openQuery->whereDoesntHave('targeted_providers')
-                                        ->whereIn('sub_category_id', $subscribed_sub_category_ids);
+                                        ->where(function ($matchQuery) use ($subscribed_sub_category_ids, $subscribed_category_ids, $subscribed_service_ids) {
+                                            $matchQuery->whereIn('sub_category_id', $subscribed_sub_category_ids)
+                                                ->orWhereIn('category_id', $subscribed_category_ids)
+                                                ->orWhereIn('service_id', $subscribed_service_ids);
+                                        });
                                 });
                             })
                             ->whereBetween('created_at', [Carbon\Carbon::now()->subDays($bidding_post_validity), Carbon\Carbon::now()])

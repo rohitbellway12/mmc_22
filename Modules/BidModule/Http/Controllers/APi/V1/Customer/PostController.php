@@ -251,7 +251,21 @@ class PostController extends Controller
         if ($hasTargetedProviders) {
             $providerQuery->whereIn('id', $request['provider_ids']);
         } else {
-            $provider_ids = SubscribedService::where('sub_category_id', $subCategoryId)->ofSubscription(1)->pluck('provider_id')->toArray();
+            $provider_ids = SubscribedService::where('is_subscribed', 1)
+                ->where(function ($q) use ($subCategoryId, $post, $serviceIds) {
+                    if (!empty($subCategoryId)) {
+                        $q->where('sub_category_id', $subCategoryId);
+                    }
+                    if (!empty($post->category_id)) {
+                        $q->orWhere('category_id', $post->category_id);
+                    }
+                    if (!empty($serviceIds)) {
+                        $q->orWhereIn('service_id', $serviceIds);
+                    }
+                })
+                ->pluck('provider_id')
+                ->unique()
+                ->toArray();
             $providerQuery->whereIn('id', $provider_ids);
         }
 

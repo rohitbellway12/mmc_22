@@ -25,7 +25,7 @@ class Category extends Model
         'is_active' => 'integer',
     ];
 
-    protected $appends = ['image_full_path'];
+    protected $appends = ['image_full_path', 'is_quotation_based'];
 
     protected $fillable = [];
 
@@ -157,6 +157,31 @@ class Category extends Model
         $imagePath = $path . $image;
 
         return getSingleImageFullPath(imagePath: $imagePath, s3Storage: $s3Storage, defaultPath: $defaultPath);
+    }
+
+    public function getIsQuotationBasedAttribute(): bool
+    {
+        $quotationCategoryIds = [
+            'e1fb2dae-c233-4b45-852b-8253373e06d7', // Alloy Refurbishment
+            '675fb918-9d0c-4ee5-9a0a-904b42651033', // Modifications
+            'dbafef35-cfa4-4757-90f4-ddbf568d5d83', // Bodywork Repairs
+        ];
+
+        $quotationNames = [
+            'alloy refurbishment',
+            'modifications',
+            'bodywork repairs',
+            'alloy refurbishment & repair',
+            'car modifications',
+            'bodywork & paint repair',
+        ];
+
+        if (in_array($this->id, $quotationCategoryIds)) {
+            return true;
+        }
+
+        $rawName = strtolower(trim($this->attributes['name'] ?? ''));
+        return in_array($rawName, $quotationNames);
     }
 
     protected static function booted()

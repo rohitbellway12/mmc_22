@@ -36,7 +36,7 @@ class Service extends Model
 
     protected $fillable = ['price'];
 
-    protected $appends = ['thumbnail_full_path', 'cover_image_full_path'];
+    protected $appends = ['thumbnail_full_path', 'cover_image_full_path', 'is_quotation_based'];
 
     public function variations(): HasMany
     {
@@ -246,6 +246,25 @@ class Service extends Model
         return getSingleImageFullPath(imagePath: $imagePath, s3Storage: $s3Storage, defaultPath: $defaultPath);
     }
 
+
+    public function getIsQuotationBasedAttribute(): bool
+    {
+        $quotationCategoryIds = [
+            'e1fb2dae-c233-4b45-852b-8253373e06d7', // Alloy Refurbishment
+            '675fb918-9d0c-4ee5-9a0a-904b42651033', // Modifications
+            'dbafef35-cfa4-4757-90f4-ddbf568d5d83', // Bodywork Repairs
+        ];
+
+        if (in_array($this->category_id, $quotationCategoryIds) || in_array($this->sub_category_id, $quotationCategoryIds)) {
+            return true;
+        }
+
+        if ($this->relationLoaded('category') && $this->category) {
+            return (bool)$this->category->is_quotation_based;
+        }
+
+        return false;
+    }
 
     protected static function booted()
     {

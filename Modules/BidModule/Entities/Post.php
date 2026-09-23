@@ -19,6 +19,8 @@ class Post extends Model
 
     protected $fillable = [];
 
+    protected $appends = ['car_image_full_path'];
+
     protected static function newFactory()
     {
         return \Modules\BidModule\Database\factories\PostFactory::new();
@@ -103,5 +105,13 @@ class Post extends Model
             'post_id',
             'service_id'
         );
+    }
+
+    public function getCarImageFullPathAttribute(): ?string
+    {
+        if (!$this->car_image) {
+            return null;
+        }
+        return asset('storage/app/public/post/car/' . $this->car_image);
     }
 }

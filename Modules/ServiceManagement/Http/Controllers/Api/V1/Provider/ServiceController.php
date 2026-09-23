@@ -47,18 +47,25 @@ class ServiceController extends Controller
             return response()->json(response_formatter(DEFAULT_400, null, error_processor($validator)), 400);
         }
 
-        $ids = $this->subscribed_service->where('provider_id', $request->user()->provider->id)
+        $subscribedRecords = $this->subscribed_service->where('provider_id', $request->user()->provider->id)
             ->when($request->has('status') && $request['status'] != 'all', function ($query) use ($request) {
                 if ($request['status'] == 'subscribed') {
                     return $query->where(['is_subscribed' => 1]);
                 } else {
                     return $query->where(['is_subscribed' => 0]);
                 }
-            })->pluck('sub_category_id')->toArray();
+            })->get();
+
+        $subCategoryIds = $subscribedRecords->pluck('sub_category_id')->filter()->toArray();
+        $categoryIds = $subscribedRecords->pluck('category_id')->filter()->toArray();
+        $serviceIds = $subscribedRecords->pluck('service_id')->filter()->toArray();
 
         $services = $this->service->with(['category.zonesBasicInfo'])->latest()
-            ->whereIn('sub_category_id', $ids)
-            ->orWhereIn('category_id', $ids)
+            ->where(function ($query) use ($subCategoryIds, $categoryIds, $serviceIds) {
+                $query->whereIn('sub_category_id', $subCategoryIds)
+                    ->orWhereIn('category_id', $categoryIds)
+                    ->orWhereIn('id', $serviceIds);
+            })
             ->paginate($request['limit'], ['*'], 'offset', $request['offset'])->withPath('');
 
         if (count($services) < 1) {
@@ -339,6 +346,44 @@ class ServiceController extends Controller
 
         return response()->json(response_formatter(DEFAULT_200), 200);
 
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function subscribe(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'service_id' => 'required|uuid',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(response_formatter(DEFAULT_400, null, error_processor($validator)), 400);
+        }
+
+        $service = $this->service->find($request['service_id']);
+        if (!$service) {
+            return response()->json(response_formatter(DEFAULT_404, null, 'Service not found'), 404);
+        }
+
+        $subscribedService = $this->subscribed_service
+            ->where('service_id', $request['service_id'])
+            ->where('provider_id', $request->user()->provider->id)
+            ->first();
+
+        if (!$subscribedService) {
+            $subscribedService = new $this->subscribed_service;
+            $subscribedService->provider_id = $request->user()->provider->id;
+            $subscribedService->service_id = $request['service_id'];
+            $subscribedService->category_id = $service->category_id;
+            $subscribedService->sub_category_id = null;
+        }
+
+        $subscribedService->is_subscribed = 1;
+        $subscribedService->save();
+
+        return response()->json(response_formatter(DEFAULT_200, $subscribedService), 200);
     }
 
     /**

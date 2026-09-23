@@ -555,12 +555,32 @@
                                     </ul>
                                 </div>
 
+                                @php
+                                    $activeCategoryModel = $categories->firstWhere('id', $activeCategory);
+                                    $isActiveQuotationCategory = $activeCategoryModel ? (bool)$activeCategoryModel->is_quotation_based : false;
+                                @endphp
+                                @if ($isActiveQuotationCategory)
+                                    <div class="alert alert-warning border border-warning-subtle d-flex align-items-center gap-3 rounded-4 p-3 mb-4 shadow-xs" style="background-color: #fffbeb; border-color: #fde68a !important;">
+                                        <span class="material-icons text-warning" style="font-size: 32px;">request_quote</span>
+                                        <div>
+                                            <strong class="text-dark d-block fs-14 mb-1">{{ translate('Quotation-Based Category') }}: {{ $activeCategoryModel->name }}</strong>
+                                            <span class="text-muted small">
+                                                {{ translate('Services in this category do not have fixed upfront prices. Customers submit vehicle details and damage or modification photos first. When new requests arrive, you will receive notifications and can submit your price quotation under') }}
+                                                <a href="{{ route('provider.booking.post.list', ['type' => 'all', 'service_type' => 'all']) }}" class="fw-bold text-primary text-decoration-underline ms-1">
+                                                    {{ translate('Booking Management > Customized Requests') }}
+                                                </a>.
+                                            </span>
+                                        </div>
+                                    </div>
+                                @endif
+
                                 @if (count($services) > 0)
                                     <div class="service-grid">
                                         @foreach ($services as $service)
                                             @php
                                                 $isSubscribed = in_array($service->id, $subscribedServiceIds);
                                                 $serviceName = strtolower($service->name);
+                                                $isQuotation = (bool)($service->is_quotation_based ?? false);
                                             @endphp
                                             <div class="premium-card">
                                                 <div
@@ -584,8 +604,14 @@
                                                 <span class="material-icons card-icon-overlay">{{ $icon }}</span>
 
                                                 <div class="service-title-wrap">
-                                                    <span
-                                                        class="service-category-badge">{{ $service->category->name ?? 'Service' }}</span>
+                                                    <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                                                        <span class="service-category-badge mb-0">{{ $service->category->name ?? 'Service' }}</span>
+                                                        @if ($isQuotation)
+                                                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1 fs-11 rounded-pill d-inline-flex align-items-center gap-1" title="{{ translate('Pricing is based on customer quotation & vehicle damage assessment') }}">
+                                                                <span class="material-icons" style="font-size: 13px;">request_quote</span> {{ translate('Quotation_Only') }}
+                                                            </span>
+                                                        @endif
+                                                    </div>
                                                     <a href="{{ route('provider.service.detail', [$service->id]) }}"
                                                         class="service-title-link">
                                                         {{ $service->name }}
@@ -641,6 +667,8 @@
                                                             <button type="button"
                                                                 class="btn-premium btn-manage w-100 manage-service-details"
                                                                 data-id="{{ $service->id }}"
+                                                                data-is-quotation="{{ $isQuotation ? '1' : '0' }}"
+                                                                data-service-name="{{ $service->name }}"
                                                                 data-estimated-time="{{ $currentEstTime }}"
                                                                 data-service-types='{{ json_encode($currentTypes) }}'
                                                                 data-variations='{{ json_encode($service->variations) }}'
@@ -834,8 +862,8 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="mb-0">
-                            <label class="label-premium d-flex align-items-center gap-2 mb-3">
+                        <div class="mb-0" id="pricing-section-wrap">
+                            <label class="label-premium d-flex align-items-center gap-2 mb-3" id="pricing-section-title">
                                 <span class="material-icons fs-18">payments</span>
                                 {{ translate('Service_Pricing') }}
                             </label>
@@ -845,7 +873,7 @@
                                     <small>{{ translate('Select_a_service_to_see_pricing_options') }}</small>
                                 </div>
                             </div>
-                            <p class="text-muted small mt-2 mb-0">
+                            <p class="text-muted small mt-2 mb-0" id="pricing-section-note">
                                 <span class="material-icons fs-12 align-middle">info</span>
                                 {{ translate('Prices_are_per_zone_and_will_be_used_during_booking') }}
                             </p>
@@ -967,32 +995,80 @@
             }
 
             // pricing variations
+            let isQuotation = $(this).data('is-quotation') == '1';
             let variations = $(this).data('variations');
             let customPrices = $(this).data('custom-prices');
             let servicePriceOverride = $(this).data('service-price');
             let container = $('#pricing-variations-container');
             container.empty();
 
-            // Logic: If variations exist and it's more than just one "Default" variation
-            let hasRealVariations = variations && variations.length > 0 && !(variations.length == 1 && variations[0]
-                .variant_key == 'default');
+            if (isQuotation) {
+                $('#pricing-section-title').html('<span class="material-icons fs-18 text-warning">request_quote</span> {{ translate("Quotation_Pricing_Model") }}');
+                $('#pricing-section-note').html('<span class="material-icons fs-12 align-middle text-warning">info</span> {{ translate("No fixed price is required for this service. Pricing is determined per quotation.") }}');
+                
+                let html = `
+                    <div class="p-3 bg-white rounded-3 border border-warning-subtle shadow-xs">
+                        <div class="d-flex align-items-start gap-2">
+                            <span class="material-icons text-warning fs-22 mt-1">lightbulb</span>
+                            <div>
+                                <div class="fw-bold text-dark mb-1 fs-13">{{ translate("Dynamic Quotation-Based Service") }}</div>
+                                <p class="text-muted small mb-0" style="line-height: 1.5;">
+                                    {{ translate("This service does not use fixed pricing because each job depends on vehicle model, condition, and damage assessment. When a customer sends vehicle photos and requirement details, you will receive the request to submit your custom price quote in") }}
+                                    <a href="{{ route('provider.booking.post.list', ['type' => 'all', 'service_type' => 'all']) }}" target="_blank" class="fw-bold text-primary text-decoration-underline">
+                                        {{ translate("Customized Requests") }}
+                                    </a>.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.append(html);
+            } else {
+                $('#pricing-section-title').html('<span class="material-icons fs-18">payments</span> {{ translate("Service_Pricing") }}');
+                $('#pricing-section-note').html('<span class="material-icons fs-12 align-middle">info</span> {{ translate("Prices_are_per_zone_and_will_be_used_during_booking") }}');
 
-            if (hasRealVariations) {
-                variations.forEach(function(variation) {
-                    let priceKey = id + '_' + variation.id;
-                    let priceValue = (customPrices && customPrices[priceKey]) ? customPrices[priceKey]
-                        .price : variation.price;
+                // Logic: If variations exist and it's more than just one "Default" variation
+                let hasRealVariations = variations && variations.length > 0 && !(variations.length == 1 && variations[0]
+                    .variant_key == 'default');
 
+                if (hasRealVariations) {
+                    variations.forEach(function(variation) {
+                        let priceKey = id + '_' + variation.id;
+                        let priceValue = (customPrices && customPrices[priceKey]) ? customPrices[priceKey]
+                            .price : variation.price;
+
+                        let html = `
+                            <div class="variation-row mb-3 pb-3 border-bottom last-child-no-border">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-bold text-dark small">${variation.variant}</span>
+                                    <span class="badge bg-soft-primary text-primary small">Base: {{ currency_symbol() }}${variation.price}</span>
+                                </div>
+                                <div class="input-group shadow-sm">
+                                    <span class="input-group-text bg-white border-end-0">{{ currency_symbol() }}</span>
+                                    <input type="number" step="0.01" class="form-control border-start-0 ps-0 variation-price-input" 
+                                           name="variations[${variation.id}]" 
+                                           value="${priceValue}" 
+                                           placeholder="0.00"
+                                           style="box-shadow: none;">
+                                </div>
+                            </div>
+                        `;
+                        container.append(html);
+                    });
+                } else {
+                    // Show single service price input
+                    let priceValue = (servicePriceOverride > 0) ? servicePriceOverride : (variations && variations
+                        .length > 0 ? variations[0].price : 0);
                     let html = `
-                        <div class="variation-row mb-3 pb-3 border-bottom last-child-no-border">
+                        <div class="variation-row mb-0 pb-0">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="fw-bold text-dark small">${variation.variant}</span>
-                                <span class="badge bg-soft-primary text-primary small">Base: {{ currency_symbol() }}${variation.price}</span>
+                                <span class="fw-bold text-dark small">{{ translate('Service_Price') }}</span>
+                                ${variations && variations.length > 0 ? `<span class="badge bg-soft-primary text-primary small">Base: {{ currency_symbol() }}${variations[0].price}</span>` : ''}
                             </div>
                             <div class="input-group shadow-sm">
                                 <span class="input-group-text bg-white border-end-0">{{ currency_symbol() }}</span>
-                                <input type="number" step="0.01" class="form-control border-start-0 ps-0 variation-price-input" 
-                                       name="variations[${variation.id}]" 
+                                <input type="number" step="0.01" class="form-control border-start-0 ps-0" 
+                                       name="service_price" 
                                        value="${priceValue}" 
                                        placeholder="0.00"
                                        style="box-shadow: none;">
@@ -1000,28 +1076,7 @@
                         </div>
                     `;
                     container.append(html);
-                });
-            } else {
-                // Show single service price input
-                let priceValue = (servicePriceOverride > 0) ? servicePriceOverride : (variations && variations
-                    .length > 0 ? variations[0].price : 0);
-                let html = `
-                    <div class="variation-row mb-0 pb-0">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="fw-bold text-dark small">{{ translate('Service_Price') }}</span>
-                            ${variations && variations.length > 0 ? `<span class="badge bg-soft-primary text-primary small">Base: {{ currency_symbol() }}${variations[0].price}</span>` : ''}
-                        </div>
-                        <div class="input-group shadow-sm">
-                            <span class="input-group-text bg-white border-end-0">{{ currency_symbol() }}</span>
-                            <input type="number" step="0.01" class="form-control border-start-0 ps-0" 
-                                   name="service_price" 
-                                   value="${priceValue}" 
-                                   placeholder="0.00"
-                                   style="box-shadow: none;">
-                        </div>
-                    </div>
-                `;
-                container.append(html);
+                }
             }
 
             var myModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('serviceDetailsModal'));

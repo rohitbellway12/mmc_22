@@ -25,6 +25,7 @@ Route::group(['prefix' => 'provider', 'as' => 'provider.', 'namespace' => 'Api\V
     Route::get('service/review/{service_id}', 'ServiceController@review');
     Route::get('service/data/sub-category-wise', [ProviderServiceController::class, 'servicesBySubcategory']);
     Route::post('service/unsubscribe', [ProviderServiceController::class, 'unsubscribe']);
+    Route::post('service/subscribe', [ProviderServiceController::class, 'subscribe']);
 
     Route::get('service-request', [ServiceRequestController::class, 'index']);
     Route::post('service-request', [ServiceRequestController::class, 'makeRequest']);
