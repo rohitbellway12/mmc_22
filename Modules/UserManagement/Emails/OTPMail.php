@@ -30,6 +30,8 @@ class OTPMail extends Mailable
      */
     public function build()
     {
-        return $this->view('usermanagement::mail-templates.otp-sent', ['otp' => $this->otp]);
+        $businessName = business_config('business_name', 'business_information')?->live_values ?? 'MMC';
+        return $this->subject("{$this->otp} is your {$businessName} verification code")
+            ->view('usermanagement::mail-templates.otp-sent', ['otp' => $this->otp]);
     }
 }

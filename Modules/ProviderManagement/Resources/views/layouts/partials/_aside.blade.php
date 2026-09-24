@@ -174,6 +174,27 @@ $logo = getBusinessSettingsImageFullPath(key: 'business_logo', settingType: 'bus
                 </ul>
             </li>
 
+            <li class="has-sub-item {{ request()->is('provider/estimate/*') ? 'sub-menu-opened' : '' }}">
+                <a href="#" class="{{ request()->is('provider/estimate/*') ? 'active-menu' : '' }}">
+                    <span class="material-icons" title="{{ translate('Quotations & Estimates') }}">request_quote</span>
+                    <span class="link-title">{{ translate('Quotations_&_Estimates') }}</span>
+                </a>
+                <ul class="nav sub-menu">
+                    <li>
+                        <a href="{{ route('provider.estimate.create') }}"
+                            class="{{ request()->is('provider/estimate/create') ? 'active-menu' : '' }}">
+                            <span class="link-title">{{ translate('Create_New_Quotation') }}</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('provider.estimate.index') }}"
+                            class="{{ request()->is('provider/estimate/list') || request()->is('provider/estimate/details*') ? 'active-menu' : '' }}">
+                            <span class="link-title">{{ translate('All_Quotations') }}</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
             {{-- Help & Support Commented Out
             <li class="nav-category">{{ translate('Help & support') }}</li>
             <li>

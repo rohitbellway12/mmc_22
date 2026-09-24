@@ -1,231 +1,156 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <title>{{translate('booking_request_sent')}}</title>
-    <link href="{{asset('public/assets/css/bootstrap.min.css')}}" rel="stylesheet" id="bootstrap-css">
-    <script src="{{asset('public/assets/js/bootstrap.min.js')}}"></script>
-    <script src="{{asset('public/assets/js/jquery.min.js')}}"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ translate('Verification OTP') }}</title>
     <style>
-        a {
-            color: rgb(65, 83, 179) !important;
-        }
-
-        #invoice {
-            padding: 30px;
-        }
-        .body{
-            background-color: #ececec;
+        body {
             margin: 0;
             padding: 0;
+            background-color: #f3f4f6;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #1f2937;
+            -webkit-text-size-adjust: 100%;
         }
-        .card_details{
-            min-width: 600px;
+        .email-container {
+            max-width: 560px;
+            margin: 32px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
         }
-        .invoice {
-            position: relative;
-            background-color: #FFF;
-            min-height: 680px;
-            padding: 15px;
-        }
-
-        .invoice header {
-            padding: 10px 0;
-            margin-bottom: 20px;
-            border-bottom: 1px solid rgb(65, 83, 179);
-        }
-
-        .invoice .company-details {
-            text-align: right;
-        }
-
-        .invoice .company-details .name {
-            margin-top: 0;
-            margin-bottom: 0;
-        }
-
-        .invoice .contacts {
-            margin-bottom: 20px;
-        }
-
-        .invoice .invoice-to {
-            text-align: left;
-        }
-
-        .invoice .invoice-to .to {
-            margin-top: 0;
-            margin-bottom: 0;
-        }
-
-        .invoice .invoice-details {
-            text-align: right;
-        }
-
-        .invoice .invoice-details .invoice-id {
-            margin-top: 0;
-            color: rgb(65, 83, 179);
-        }
-
-        .invoice main {
-            padding-bottom: 50px;
-        }
-
-        .invoice main .thanks {
-            margin-top: -100px;
-            font-size: 2em;
-            margin-bottom: 50px;
-        }
-
-        .invoice main .notices {
-            padding-left: 6px;
-            border-left: 6px solid rgb(65, 83, 179);
-        }
-
-        .invoice main .notices .notice {
-            font-size: 1.2em;
-        }
-
-        .invoice table {
-            width: 100%;
-            border-collapse: collapse;
-            border-spacing: 0;
-            margin-bottom: 20px;
-        }
-
-        .invoice table td, .invoice table th {
-            padding: 15px;
-            background: #eee;
-            border-bottom: 1px solid #fff;
-        }
-
-        .invoice table th {
-            white-space: nowrap;
-            font-weight: 400;
-            font-size: 16px;
-        }
-
-        .invoice table td h3 {
-            margin: 0;
-            font-weight: 400;
-            color: rgb(65, 83, 179);
-            font-size: 1.2em;
-        }
-
-        .invoice table .qty, .invoice table .total, .invoice table .unit {
-            text-align: right;
-            font-size: 1.2em;
-        }
-
-        .invoice table .no {
-            color: #fff;
-            font-size: 1.6em;
-            background: rgb(65, 83, 179);
-        }
-
-        .invoice table .unit {
-            background: #ddd;
-        }
-
-        .invoice table .total {
-            background: rgb(65, 83, 179);
-            color: #fff;
-        }
-
-        .invoice table tbody tr:last-child td {
-            border: none;
-        }
-
-        .invoice table tfoot td {
-            background: 0 0;
-            border-bottom: none;
-            white-space: nowrap;
-            text-align: right;
-            padding: 10px 20px;
-            font-size: 1.2em;
-            border-top: 1px solid #aaa;
-        }
-
-        .invoice table tfoot tr:first-child td {
-            border-top: none;
-        }
-
-        .invoice table tfoot tr:last-child td {
-            color: rgb(65, 83, 179);
-            font-size: 1.4em;
-            border-top: 1px solid rgb(65, 83, 179);
-        }
-
-        .invoice table tfoot tr td:first-child {
-            border: none;
-        }
-
-        .invoice footer {
-            width: 100%;
+        .header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            padding: 28px 24px;
             text-align: center;
-            color: #777;
-            border-top: 1px solid #aaa;
-            padding: 8px 0;
+            color: #ffffff;
         }
-
-        @media print {
-            .invoice {
-                font-size: 11px !important;
-                overflow: hidden !important;
-            }
-
-            .invoice footer {
-                position: absolute;
-                bottom: 10px;
-                page-break-after: always;
-            }
-
-            .invoice > div:last-child {
-                page-break-before: always;
-            }
-            .otp_section{
-                height: 50px;
-            }
+        .header h1 {
+            margin: 0 0 6px;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .header p {
+            margin: 0;
+            font-size: 13px;
+            opacity: 0.9;
+            letter-spacing: 0.3px;
+        }
+        .content {
+            padding: 32px 28px;
+            text-align: center;
+        }
+        .badge {
+            display: inline-block;
+            background-color: #eff6ff;
+            color: #2563eb;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            margin-bottom: 16px;
+        }
+        .title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #111827;
+            margin: 0 0 12px;
+        }
+        .desc {
+            font-size: 14px;
+            color: #4b5563;
+            line-height: 1.6;
+            margin: 0 0 24px;
+        }
+        .otp-wrapper {
+            background: #f8fafc;
+            border: 2px dashed #93c5fd;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 0 auto 24px;
+            max-width: 320px;
+        }
+        .otp-code {
+            font-size: 34px;
+            font-weight: 800;
+            letter-spacing: 10px;
+            color: #1e3a8a;
+            font-family: "Courier New", Courier, monospace;
+            display: block;
+            margin-left: 10px; /* balances out letter-spacing */
+        }
+        .notice-card {
+            background-color: #fefce8;
+            border: 1px solid #fef08a;
+            border-radius: 8px;
+            padding: 14px 16px;
+            text-align: left;
+            margin-bottom: 24px;
+            font-size: 13px;
+            color: #854d0e;
+            line-height: 1.5;
+        }
+        .notice-card strong {
+            color: #713f12;
+        }
+        .footer {
+            background-color: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+            padding: 20px 24px;
+            text-align: center;
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .footer a {
+            color: #2563eb;
+            text-decoration: none;
         }
     </style>
 </head>
-<body class="body">
-<div id="invoice">
-    <div class="invoice overflow-auto">
-        <div class="card_details">
-            <header>
-                <div class="row">
-                    <div class="col">
-                        <a target="_blank" href="#">
-                            @php($logo = business_config('business_logo','business_information'))
-                            <img width="200" src="{{asset('storage/app/public/business')}}/{{$logo->live_values}}" alt="{{ translate('logo') }}"
-                                 data-holder-rendered="true"/>
-                        </a>
-                    </div>
-                    <div class="col company-details">
-                        <h2 class="name">
-                            @php($business_name = business_config('business_name','business_information'))
-                            @php($business_email = business_config('business_email','business_information'))
-                            @php($business_phone = business_config('business_phone','business_information'))
-                            @php($business_address = business_config('business_address','business_information'))
-                            <a target="_blank" href="#">
-                                {{$business_name->live_values}}
-                            </a>
-                        </h2>
-                        <div>{{$business_address->live_values}}</div>
-                        <div>{{$business_phone->live_values}}</div>
-                        <div>{{$business_email->live_values}}</div>
-                    </div>
-                </div>
-            </header>
-            <main class="otp_section">
-                {{translate('Your OTP is') . ' ' . $otp}}
-            </main>
-            <footer>
-            </footer>
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>{{ business_config('business_name', 'business_information')?->live_values ?? 'MMC Automotive' }}</h1>
+            <p>{{ translate('Authentication & Verification') }}</p>
         </div>
-        <div></div>
+
+        <!-- Content -->
+        <div class="content">
+            <span class="badge">{{ translate('Security Verification') }}</span>
+            <h2 class="title">{{ translate('Your One-Time Password (OTP)') }}</h2>
+            <p class="desc">
+                {{ translate('Use the following 4-digit code to verify your account and complete your sign in or registration.') }}
+            </p>
+
+            <!-- OTP Box -->
+            <div class="otp-wrapper">
+                <span class="otp-code">{{ $otp }}</span>
+            </div>
+
+            <!-- Notice -->
+            <div class="notice-card">
+                <div>⏱️ <strong>{{ translate('Expiry') }}:</strong> {{ translate('This OTP is valid for 3 minutes only.') }}</div>
+                <div style="margin-top: 6px;">🔒 <strong>{{ translate('Security Note') }}:</strong> {{ translate('Please do NOT share this code with anyone. MMC representatives will never ask for your OTP.') }}</div>
+            </div>
+
+            <p style="font-size: 12px; color: #9ca3af; margin: 0;">
+                {{ translate('If you did not request this OTP, please ignore this email or contact support if you suspect unauthorized activity.') }}
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p style="margin: 0 0 6px;">&copy; {{ date('Y') }} {{ business_config('business_name', 'business_information')?->live_values ?? 'MMC Automotive' }}. {{ translate('All rights reserved.') }}</p>
+            <p style="margin: 0;">
+                {{ translate('Need help?') }} <a href="mailto:{{ business_config('business_email', 'business_information')?->live_values ?? 'support@mmc.com' }}">{{ business_config('business_email', 'business_information')?->live_values ?? 'support@mmc.com' }}</a>
+            </p>
+        </div>
     </div>
-</div>
 </body>
 </html>

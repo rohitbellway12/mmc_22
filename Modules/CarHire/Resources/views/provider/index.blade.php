@@ -77,22 +77,45 @@
                                                     alt="">
                                             @endif
                                         </td>
-                                        <td>{{ $car->brand ?? '' }}</td>
+                                        <td>
+                                            <div class="fw-bold text-dark">{{ $car->brand ?? '' }} {{ $car->model ?? '' }}</div>
+                                            <div class="fz-12 text-muted">
+                                                @if($car->registration_number)
+                                                    <span class="badge bg-light text-dark border">{{ $car->registration_number }}</span>
+                                                @endif
+                                                @if($car->manufacture_year || $car->year)
+                                                    <span>• {{ $car->manufacture_year ?? $car->year }}</span>
+                                                @endif
+                                                @if($car->transmission_type || $car->transmission)
+                                                    <span>• {{ $car->transmission_type ?? $car->transmission }}</span>
+                                                @endif
+                                            </div>
+                                        </td>
                                         <td>
                                             @if ($car->service_category == 'car_hire')
-                                                <span class="badge badge-info">{{ translate('Car Hire') }}</span>
+                                                <span class="badge bg-info-subtle text-info border border-info-subtle">{{ translate('Car Hire (Self-Drive)') }}</span>
                                             @elseif($car->service_category == 'chauffeur')
-                                                <span
-                                                    class="badge badge-primary">{{ translate('Chauffeur Service') }}</span>
+                                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle">{{ translate('Chauffeur Service') }}</span>
+                                                @if($car->chauffeur_tier)
+                                                    <div class="fz-11 text-muted mt-1">{{ ucwords(str_replace('_', ' ', $car->chauffeur_tier)) }}</div>
+                                                @endif
                                             @else
                                                 {{ $car->category->name ?? '' }}
                                             @endif
                                         </td>
                                         <td>
-                                            @if ($car->service_category == 'car_hire' || $car->pricing_type == 'hourly')
-                                                {{ currency_symbol() }}{{ with_decimal_point($car->hourly_rate) }}/{{ translate('hr') }}
+                                            @if ($car->service_category == 'car_hire')
+                                                <div class="fw-bold text-primary">{{ currency_symbol() }}{{ with_decimal_point($car->daily_rate ?? $car->daily_rent ?? 0) }}/{{ translate('day') }}</div>
+                                                @if(($car->hourly_rate ?? 0) > 0)
+                                                    <div class="fz-11 text-muted">{{ currency_symbol() }}{{ with_decimal_point($car->hourly_rate) }}/{{ translate('hr') }}</div>
+                                                @endif
+                                            @elseif($car->service_type == 'full_day' || $car->pricing_type == 'daily')
+                                                <div class="fw-bold text-primary">{{ currency_symbol() }}{{ with_decimal_point($car->daily_rate ?? 0) }}/{{ translate('day') }}</div>
                                             @else
-                                                {{ currency_symbol() }}{{ with_decimal_point($car->daily_rate) }}/{{ translate('day') }}
+                                                <div class="fw-bold text-primary">{{ currency_symbol() }}{{ with_decimal_point($car->hourly_rate ?? 0) }}/{{ translate('hr') }}</div>
+                                                @if(($car->min_booking_hours ?? 1) > 1)
+                                                    <div class="fz-11 text-muted">{{ translate('Min') }} {{ $car->min_booking_hours }} {{ translate('hrs') }}</div>
+                                                @endif
                                             @endif
                                         </td>
                                         <td>

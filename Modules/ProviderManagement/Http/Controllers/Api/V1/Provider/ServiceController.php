@@ -44,12 +44,14 @@ class ServiceController extends Controller
         }
         $providerId = $provider->id;
 
-        // Get active subscribed service IDs for this provider
-        $subscribedServiceIds = $this->subscribedService->where('provider_id', $providerId)
+        // Get active subscribed services for this provider
+        $subscribedServices = $this->subscribedService->where('provider_id', $providerId)
             ->where('is_subscribed', 1)
             ->whereNotNull('service_id')
-            ->pluck('service_id')
-            ->toArray();
+            ->get()
+            ->keyBy('service_id');
+
+        $subscribedServiceIds = $subscribedServices->keys()->toArray();
 
         // Get all active main categories in the provider's zone
         $categories = $this->category->ofStatus(1)->ofType('main')
@@ -77,9 +79,29 @@ class ServiceController extends Controller
             ->latest()
             ->paginate($request['limit'] ?? 100, ['*'], 'offset', $request['offset'] ?? 1)->withPath('');
 
-        // Map is_subscribed status to each service
-        $services->getCollection()->transform(function ($service) use ($subscribedServiceIds) {
-            $service->is_subscribed = in_array($service->id, $subscribedServiceIds);
+        // Map is_subscribed status and configuration details to each service
+        $services->getCollection()->transform(function ($service) use ($subscribedServices) {
+            $sub = $subscribedServices->get($service->id);
+            $service->is_subscribed = $sub ? true : false;
+
+            if ($sub) {
+                $service->service_types = !empty($sub->service_types) ? $sub->service_types : ['mobile', 'workshop'];
+                $service->estimated_time = $sub->estimated_time;
+                $service->service_price = $sub->service_price !== null ? (float) $sub->service_price : null;
+
+                $images = [];
+                if (!empty($sub->completed_service_images) && is_array($sub->completed_service_images)) {
+                    foreach ($sub->completed_service_images as $img) {
+                        $images[] = asset('storage/app/public/subscribed_service/' . $img);
+                    }
+                }
+                $service->completed_service_images = $images;
+            } else {
+                $service->service_types = [];
+                $service->estimated_time = null;
+                $service->service_price = null;
+                $service->completed_service_images = [];
+            }
             return $service;
         });
 

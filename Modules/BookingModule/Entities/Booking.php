@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Mail;
+use Modules\BookingModule\Emails\BookingStatusUpdateMail;
+use Modules\PromotionManagement\Entities\PushNotification;
+use Modules\PromotionManagement\Entities\PushNotificationUser;
 use Modules\BidModule\Entities\Post;
 use Modules\BookingModule\Http\Traits\BookingTrait;
 use Modules\BookingModule\Http\Traits\BookingScopes;
@@ -438,38 +441,88 @@ class Booking extends Model
                 }
 
 
+                // 1. Send Customer Email on Booking Status Change
+                try {
+                    $emailStatus = business_config('email_config_status', 'email_config')?->live_values;
+                    $emailPermission = isNotificationActive(null, 'booking', 'email', 'user');
+                    $customerEmail = $model->customer?->email;
+
+                    if ($emailStatus && $emailPermission && !empty($customerEmail)) {
+                        Mail::to($customerEmail)->send(new BookingStatusUpdateMail($model, $model->booking_status));
+                    }
+                } catch (\Exception $e) {
+                    info("Booking status update email failed: " . $e->getMessage());
+                }
+
+                // 2. Send Push Notifications & Record In-App Notifications
                 if (isset($booking_notification_status) && $booking_notification_status['push_notification_booking']) {
                     foreach ($notifications ?? [] as $notification) {
                         $key = $notification['key'];
                         $settingsType = $notification['settings_type'];
 
+                        $readableStatus = ucfirst(str_replace('_', ' ', $model->booking_status));
+                        $bookingCode = $model->readable_id ?? $model->id;
+
                         if ($settingsType == 'customer_notification') {
                             $user = $model?->customer;
                             $repeatOrRegular = $model?->is_repeated ? 'repeat' : 'regular';
                             $title = get_push_notification_message($key, $settingsType, $user?->current_language_key);
+                            if (empty($title)) {
+                                $title = "Booking #{$bookingCode} {$readableStatus}";
+                            }
+                            $description = "Your booking #{$bookingCode} status has been updated to {$readableStatus}.";
+
                             $permission = isNotificationActive(null, 'booking', 'notification', 'user');
-                            if ($user?->fcm_token && $user?->is_active && $title && $permission) {
-                                device_notification($user?->fcm_token, $title, null, null, $model->id, 'booking', null, null, null, null, $repeatOrRegular);
+                            if ($user?->fcm_token && $user?->is_active && $permission) {
+                                device_notification($user?->fcm_token, $title, $description, null, $model->id, 'booking', null, null, null, null, $repeatOrRegular);
+                            }
+
+                            // Record in-app notification for Customer
+                            if ($user && $permission) {
+                                try {
+                                    $pushNotification = new PushNotification();
+                                    $pushNotification->title = $title;
+                                    $pushNotification->description = $description;
+                                    $pushNotification->zone_ids = json_encode([$model->zone_id]);
+                                    $pushNotification->to_users = json_encode(['customer']);
+                                    $pushNotification->is_active = 1;
+                                    $pushNotification->save();
+
+                                    $pushNotificationUser = new PushNotificationUser();
+                                    $pushNotificationUser->push_notification_id = $pushNotification->id;
+                                    $pushNotificationUser->user_id = $user->id;
+                                    $pushNotificationUser->save();
+                                } catch (\Exception $e) {
+                                    info("Customer in-app notification log failed: " . $e->getMessage());
+                                }
                             }
                         }
 
                         if ($settingsType == 'provider_notification') {
+                            $provider = $model?->provider?->owner;
+                            $repeatOrRegular = $model?->is_repeated ? 'repeat' : 'regular';
+                            $title = get_push_notification_message($key, $settingsType, $provider?->current_language_key);
+                            if (empty($title)) {
+                                $title = "Booking #{$bookingCode} {$readableStatus}";
+                            }
+                            $description = "Booking #{$bookingCode} status is now {$readableStatus}.";
 
-                            if ((!business_config('suspend_on_exceed_cash_limit_provider', 'provider_config')->live_values || $model?->provider?->is_suspended == 0) && $model->booking_status == 'pending') {
-                                $provider = $model?->provider?->owner;
-                                $repeatOrRegular = $model?->is_repeated ? 'repeat' : 'regular';
-                                $title = get_push_notification_message($key, $settingsType, $provider?->current_language_key);
+                            if ($provider?->fcm_token && sendDeviceNotificationPermission($model?->provider_id)) {
+                                device_notification($provider?->fcm_token, $title, $description, null, $model->id, 'booking', null, null, null, null, $repeatOrRegular);
+                            }
 
-                                if ($provider?->fcm_token && $title && sendDeviceNotificationPermission($model?->provider_id)) {
-                                    device_notification($provider?->fcm_token, $title, null, null, $model->id, 'booking', null, null, null, null, $repeatOrRegular);
-                                }
-                            } else {
-                                $provider = $model?->provider?->owner;
-                                $repeatOrRegular = $model?->is_repeated ? 'repeat' : 'regular';
-                                $title = get_push_notification_message($key, $settingsType, $provider?->current_language_key);
-
-                                if ($provider?->fcm_token && $title && sendDeviceNotificationPermission($model?->provider_id)) {
-                                    device_notification($provider?->fcm_token, $title, null, null, $model->id, 'booking', null, null, null, null, $repeatOrRegular);
+                            // Record in-app notification for Provider
+                            if ($provider) {
+                                try {
+                                    $pushNotification = new PushNotification();
+                                    $pushNotification->title = $title;
+                                    $pushNotification->description = $description;
+                                    $pushNotification->zone_ids = json_encode([$model->zone_id]);
+                                    $pushNotification->to_users = json_encode(['provider-admin']);
+                                    $pushNotification->is_active = 1;
+                                    $pushNotification->save();
+                                } catch (\Exception $e) {
+                                    info("Provider in-app notification log failed: " . $e->getMessage());
                                 }
                             }
                         }
@@ -477,8 +530,13 @@ class Booking extends Model
                         if ($settingsType == 'serviceman_notification') {
                             $serviceman = $model?->serviceman?->user;
                             $title = get_push_notification_message($key, $settingsType, $serviceman?->current_language_key);
-                            if ($serviceman?->fcm_token && $title) {
-                                device_notification($serviceman?->fcm_token, $title, null, null, $model->id, 'booking');
+                            if (empty($title)) {
+                                $title = "Booking #{$bookingCode} {$readableStatus}";
+                            }
+                            $description = "Assigned Booking #{$bookingCode} is now {$readableStatus}.";
+
+                            if ($serviceman?->fcm_token) {
+                                device_notification($serviceman?->fcm_token, $title, $description, null, $model->id, 'booking');
                             }
                         }
                     }

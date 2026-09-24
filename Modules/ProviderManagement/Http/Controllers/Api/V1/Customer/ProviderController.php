@@ -249,6 +249,36 @@ class ProviderController extends Controller
                         ->where('customer_user_id', $this->customer_user_id)
                         ->where('service_id', $service->id)
                         ->exists() ? 1 : 0;
+
+                    // Attach provider's configured service details (Service Configuration)
+                    $sub = $subscriptions->first(function ($s) use ($service) {
+                        return (string)$s->service_id === (string)$service->id;
+                    });
+
+                    if (!$sub) {
+                        $sub = $subscriptions->first(function ($s) use ($service) {
+                            return (string)$s->sub_category_id === (string)$service->sub_category_id && empty($s->service_id);
+                        });
+                    }
+
+                    if ($sub) {
+                        $service->service_types = !empty($sub->service_types) ? $sub->service_types : ['mobile', 'workshop'];
+                        $service->estimated_time = $sub->estimated_time ?? null;
+                        $service->service_price = $sub->service_price !== null ? (float)$sub->service_price : null;
+
+                        $images = [];
+                        if (!empty($sub->completed_service_images) && is_array($sub->completed_service_images)) {
+                            foreach ($sub->completed_service_images as $img) {
+                                $images[] = asset('storage/app/public/subscribed_service/' . $img);
+                            }
+                        }
+                        $service->completed_service_images = $images;
+                    } else {
+                        $service->service_types = ['mobile', 'workshop'];
+                        $service->estimated_time = null;
+                        $service->service_price = null;
+                        $service->completed_service_images = [];
+                    }
                 }
             }
         }
@@ -582,13 +612,13 @@ class ProviderController extends Controller
                 ->where('is_active', 1)
                 ->get();
 
-            // Load subscribed_services prices (flat price set by provider per service)
+            // Load subscribed_services details (flat price, service_types, estimated_time, images set by provider per service)
             $providerIds = $providers->pluck('id')->toArray();
             $allSubscribedPrices = DB::table('subscribed_services')
                 ->whereIn('provider_id', $providerIds)
                 ->whereIn('service_id', $serviceIds)
                 ->where('is_subscribed', 1)
-                ->select('provider_id', 'service_id', 'service_price')
+                ->select('provider_id', 'service_id', 'service_price', 'service_types', 'estimated_time', 'completed_service_images')
                 ->get();
 
             $providers = $providers->map(function ($provider) use ($services, $allServiceVariations, $allCustomPrices, $allSubscribedPrices) {
@@ -623,14 +653,34 @@ class ProviderController extends Controller
                         ];
                     })->values();
 
+                    $subscribedRow = $allSubscribedPrices
+                        ->where('provider_id', $provider->id)
+                        ->where('service_id', $service->id)
+                        ->first();
+
+                    $serviceTypes = ['mobile', 'workshop'];
+                    if (!empty($subscribedRow?->service_types)) {
+                        $parsedTypes = is_array($subscribedRow->service_types) ? $subscribedRow->service_types : json_decode($subscribedRow->service_types, true);
+                        if (!empty($parsedTypes) && is_array($parsedTypes)) {
+                            $serviceTypes = array_values($parsedTypes);
+                        }
+                    }
+
+                    $completedImages = [];
+                    if (!empty($subscribedRow?->completed_service_images)) {
+                        $parsedImgs = is_array($subscribedRow->completed_service_images) ? $subscribedRow->completed_service_images : json_decode($subscribedRow->completed_service_images, true);
+                        if (!empty($parsedImgs) && is_array($parsedImgs)) {
+                            foreach ($parsedImgs as $img) {
+                                $completedImages[] = asset('storage/app/public/subscribed_service/' . $img);
+                            }
+                        }
+                    }
+
+                    $estimatedTime = $subscribedRow?->estimated_time ?? null;
+
                     // If no zone-wise variations exist for this service, fall back to
                     // subscribed_services.service_price (flat price provider set in Service Configuration)
                     if ($formattedVariations->isEmpty()) {
-                        $subscribedRow = $allSubscribedPrices
-                            ->where('provider_id', $provider->id)
-                            ->where('service_id', $service->id)
-                            ->first();
-
                         $minPrice = (float) ($subscribedRow->service_price ?? 0);
                         $totalPrice += $minPrice;
 
@@ -638,8 +688,12 @@ class ProviderController extends Controller
                             'service_id' => $service->id,
                             'service_name' => $service->name,
                             'min_price' => $minPrice,
+                            'service_price' => $minPrice,
                             'variations' => [],
                             'price_type' => 'flat',
+                            'service_types' => $serviceTypes,
+                            'estimated_time' => $estimatedTime,
+                            'completed_service_images' => $completedImages,
                         ];
                     } else {
                         $minPrice = $formattedVariations->min('price') ?? 0;
@@ -649,14 +703,24 @@ class ProviderController extends Controller
                             'service_id' => $service->id,
                             'service_name' => $service->name,
                             'min_price' => $minPrice,
+                            'service_price' => (float) ($subscribedRow->service_price ?? $minPrice),
                             'variations' => $formattedVariations,
                             'price_type' => 'variation',
+                            'service_types' => $serviceTypes,
+                            'estimated_time' => $estimatedTime,
+                            'completed_service_images' => $completedImages,
                         ];
                     }
                 }
 
                 $provider->selected_services = $providerSelectedServices;
                 $provider->total_selected_services_price = (float) $totalPrice;
+
+                // Also attach service configuration directly to provider for convenience
+                $provider->service_types = $providerSelectedServices[0]['service_types'] ?? ['mobile', 'workshop'];
+                $provider->estimated_time = $providerSelectedServices[0]['estimated_time'] ?? null;
+                $provider->completed_service_images = $providerSelectedServices[0]['completed_service_images'] ?? [];
+
                 return $provider;
             });
 

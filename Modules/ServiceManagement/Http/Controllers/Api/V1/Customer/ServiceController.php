@@ -786,6 +786,33 @@ class ServiceController extends Controller
             }
 
             $service['variations_app_format'] = self::variationsAppFormat($service);
+
+            $providerId = $request->input('provider_id') ?? $request->input('id');
+            if ($providerId) {
+                $sub = \Modules\ProviderManagement\Entities\SubscribedService::where('provider_id', $providerId)
+                    ->where(function ($q) use ($service) {
+                        $q->where('service_id', $service->id)
+                            ->orWhere(function ($subQ) use ($service) {
+                                $subQ->where('sub_category_id', $service->sub_category_id)->whereNull('service_id');
+                            });
+                    })
+                    ->first();
+
+                if ($sub) {
+                    $service['service_types'] = !empty($sub->service_types) ? $sub->service_types : ['mobile', 'workshop'];
+                    $service['estimated_time'] = $sub->estimated_time ?? null;
+                    $service['service_price'] = $sub->service_price !== null ? (float) $sub->service_price : null;
+
+                    $images = [];
+                    if (!empty($sub->completed_service_images) && is_array($sub->completed_service_images)) {
+                        foreach ($sub->completed_service_images as $img) {
+                            $images[] = asset('storage/app/public/subscribed_service/' . $img);
+                        }
+                    }
+                    $service['completed_service_images'] = $images;
+                }
+            }
+
             return response()->json(response_formatter(DEFAULT_200, $service), 200);
         }
         return response()->json(response_formatter(DEFAULT_204), 200);

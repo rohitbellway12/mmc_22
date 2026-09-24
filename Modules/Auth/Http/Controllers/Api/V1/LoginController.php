@@ -144,6 +144,13 @@ class LoginController extends Controller
             ]), 401);
         }
 
+        // Save FCM token if provided
+        if ($request->filled('fcm_token')) {
+            $user->fcm_token = $request->fcm_token;
+            $user->save();
+        }
+
+        return response()->json(response_formatter(AUTH_LOGIN_200, self::authenticate($user, PROVIDER_PANEL_ACCESS)), 200);
     }
 
 
@@ -243,106 +250,133 @@ class LoginController extends Controller
      * @return JsonResponse
      */
     public function providerOtpLogin(Request $request): JsonResponse
-{
-    $validator = Validator::make($request->all(), [
-        'phone' => 'nullable|regex:/^([0-9\s\-\+\(\)]*)$/|min:10',
-        'email' => 'nullable|email|max:255',
-        'otp' => 'nullable|max:6',
-    ]);
-
-    if ($validator->fails()) {
-        return response()->json(response_formatter(DEFAULT_400, null, error_processor($validator)), 400);
-    }
-
-    if (!$request->filled('phone') && !$request->filled('email')) {
-        return response()->json(response_formatter(DEFAULT_400, null, ['message' => translate('Please provide either phone or email')]), 400);
-    }
-
-    // 💡 DYNAMIC IDENTITY LOGIC (Jaise Customer mein hai)
-    $identityType = $request->filled('email') ? 'email' : 'phone';
-    $identity = $request->filled('email') ? $request['email'] : $request['phone'];
-
-    // User ko dhundo based on email ya phone
-    $user = $this->user->where($identityType, $identity)
-        ->ofType(['provider-admin'])
-        ->first();
-
-    if (!$user) {
-        return response()->json(response_formatter(DEFAULT_404), 404);
-    }
-
-    if ($request->has('otp')) {
-        $otpValidator = Validator::make($request->all(), [
-            'otp' => 'required|max:6',
+    {
+        $validator = Validator::make($request->all(), [
+            'phone' => 'nullable|regex:/^([0-9\s\-\+\(\)]*)$/|min:10',
+            'email' => 'nullable|email|max:255',
+            'otp' => 'nullable|max:6',
         ]);
 
-        if ($otpValidator->fails()) {
-            return response()->json(response_formatter(DEFAULT_400, null, error_processor($otpValidator)), 400);
+        if ($validator->fails()) {
+            return response()->json(response_formatter(DEFAULT_400, null, error_processor($validator)), 400);
         }
 
-        $verificationData = DB::table('user_verifications')
-            ->where('identity', $identity)
-            ->where('identity_type', $identityType)
-            ->where(['otp' => $request['otp']])
-            ->where('expires_at', '>', now())
+        if (!$request->filled('phone') && !$request->filled('email')) {
+            return response()->json(response_formatter(DEFAULT_400, null, ['message' => translate('Please provide either phone or email')]), 400);
+        }
+
+        // 💡 DYNAMIC IDENTITY LOGIC (Jaise Customer mein hai)
+        $identityType = $request->filled('email') ? 'email' : 'phone';
+        $identity = $request->filled('email') ? $request['email'] : $request['phone'];
+
+        // User ko dhundo based on email ya phone
+        $user = $this->user->where($identityType, $identity)
+            ->ofType(['provider-admin'])
             ->first();
 
-        if (isset($verificationData)) {
-            DB::table('user_verifications')
+        if (!$user) {
+            return response()->json(response_formatter(DEFAULT_404), 404);
+        }
+
+        if ($request->has('otp')) {
+            $otpValidator = Validator::make($request->all(), [
+                'otp' => 'required|max:6',
+            ]);
+
+            if ($otpValidator->fails()) {
+                return response()->json(response_formatter(DEFAULT_400, null, error_processor($otpValidator)), 400);
+            }
+
+            // Test bypass (mmc@gmail.com with 1234)
+            if (
+                $identityType === 'email' &&
+                strtolower($identity) === 'mmc@gmail.com' &&
+                $request->otp === '1234'
+            ) {
+                if ($request->filled('fcm_token')) {
+                    $user->fcm_token = $request->fcm_token;
+                    $user->save();
+                }
+                return response()->json(
+                    response_formatter(
+                        AUTH_LOGIN_200,
+                        self::authenticate($user, PROVIDER_PANEL_ACCESS)
+                    ),
+                    200
+                );
+            }
+
+            $verificationData = DB::table('user_verifications')
                 ->where('identity', $identity)
                 ->where('identity_type', $identityType)
                 ->where(['otp' => $request['otp']])
-                ->delete();
+                ->where('expires_at', '>', now())
+                ->first();
 
-            // Save FCM token if provided
-            if ($request->filled('fcm_token')) {
-                $user->fcm_token = $request->fcm_token;
-                $user->save();
+            if (isset($verificationData)) {
+                DB::table('user_verifications')
+                    ->where('identity', $identity)
+                    ->where('identity_type', $identityType)
+                    ->where(['otp' => $request['otp']])
+                    ->delete();
+
+                // Save FCM token if provided
+                if ($request->filled('fcm_token')) {
+                    $user->fcm_token = $request->fcm_token;
+                    $user->save();
+                }
+
+                return response()->json(response_formatter(AUTH_LOGIN_200, self::authenticate($user, PROVIDER_PANEL_ACCESS)), 200);
             }
 
-            return response()->json(response_formatter(AUTH_LOGIN_200, self::authenticate($user, PROVIDER_PANEL_ACCESS)), 200);
+            return response()->json(response_formatter(DEFAULT_404), 404);
         }
 
-        return response()->json(response_formatter(DEFAULT_404), 404);
-    }
+        // Purane OTP delete karo taaki naya generate ho sake
+        DB::table('user_verifications')->where('identity', $identity)->where('identity_type', $identityType)->delete();
 
-    // Purane OTP delete karo taaki naya generate ho sake
-    DB::table('user_verifications')->where('identity', $identity)->where('identity_type', $identityType)->delete();
+        $otp = env('APP_ENV') != 'live' ? '1234' : rand(1000, 9999);
 
-    $otp = env('APP_ENV') != 'live' ? '1234' : rand(1000, 9999);
-
-    // 📱 Phone aur Email dono ke liye gateway handle karna (Jaise Customer mein hai)
-    if ($identityType === 'phone') {
-        $published_status = 0;
-        $payment_published_status = config('get_payment_publish_status');
-        if (isset($payment_published_status[0]['is_published'])) {
-            $published_status = $payment_published_status[0]['is_published'];
+        // Test email always uses OTP 1234
+        if (
+            $identityType === 'email' &&
+            strtolower($identity) === 'mmc@gmail.com'
+        ) {
+            $otp = '1234';
         }
 
-        if ($published_status == 1) {
-            SmsGateway::send($identity, $otp);
+        // 📱 Phone aur Email dono ke liye gateway handle karna
+        if ($identityType === 'phone') {
+            $published_status = 0;
+            $payment_published_status = config('get_payment_publish_status');
+            if (isset($payment_published_status[0]['is_published'])) {
+                $published_status = $payment_published_status[0]['is_published'];
+            }
+
+            if ($published_status == 1) {
+                SmsGateway::send($identity, $otp);
+            } else {
+                SMS_gateway::send($identity, $otp);
+            }
         } else {
-            SMS_gateway::send($identity, $otp);
+            try {
+                Mail::to($identity)->send(new OTPMail($otp));
+            } catch (Exception $exception) {
+                // keep the response flow intact even if mail delivery fails
+            }
         }
-    } else {
-        try {
-            Mail::to($identity)->send(new OTPMail($otp));
-        } catch (Exception $exception) {
-            // keep the response flow intact even if mail delivery fails
-        }
+
+        DB::table('user_verifications')->insert([
+            'identity' => $identity,
+            'identity_type' => $identityType,
+            'user_id' => $user->id,
+            'otp' => $otp,
+            'expires_at' => now()->addMinutes(3),
+            'created_at' => now(),
+        ]);
+
+        return response()->json(response_formatter(DEFAULT_SENT_OTP_200, ['otp' => $otp]), 200);
     }
-
-    DB::table('user_verifications')->insert([
-        'identity' => $identity,
-        'identity_type' => $identityType,
-        'user_id' => $user->id,
-        'otp' => $otp,
-        'expires_at' => now()->addMinutes(3),
-        'created_at' => now(),
-    ]);
-
-    return response()->json(response_formatter(DEFAULT_SENT_OTP_200, ['otp' => $otp]), 200);
-}
 
     /**
      * @param Request $request

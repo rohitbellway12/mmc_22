@@ -34,11 +34,14 @@ class CustomerCarController extends Controller
     public function index(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'category_id' => 'required|uuid',
+            'category_id' => 'nullable|uuid',
+            'service_category' => 'nullable|in:car_hire,chauffeur,all',
             'limit' => 'numeric|min:1|max:200',
-            'offset' => 'numeric|min:1|max:100000',
+            'offset' => 'numeric|min:0|max:100000',
             'brand' => 'nullable|string',
-            'transmission_type' => 'nullable|in:manual,automatic',
+            'transmission_type' => 'nullable|string',
+            'fuel_type' => 'nullable|string',
+            'chauffeur_tier' => 'nullable|string',
             'postcode' => 'nullable|string',
             'car_type_id' => 'nullable',
         ]);
@@ -47,21 +50,35 @@ class CustomerCarController extends Controller
             return response()->json(response_formatter(DEFAULT_400, null, error_processor($validator)), 400);
         }
 
-        $limit = $request->query('limit', 10);
-        $offset = $request->query('offset', 1);
+        $limit = $request->get('limit', 10);
+        $offset = $request->get('offset', 1);
 
         $cars = $this->car->with(['type', 'category'])
-            ->where('category_id', $request->category_id)
-            ->when($request->has('brand'), function ($query) use ($request) {
+            ->when($request->filled('category_id'), function ($query) use ($request) {
+                return $query->where('category_id', $request->category_id);
+            })
+            ->when($request->filled('service_category') && $request->service_category !== 'all', function ($query) use ($request) {
+                return $query->where('service_category', $request->service_category);
+            })
+            ->when($request->filled('brand'), function ($query) use ($request) {
                 return $query->where('brand', 'like', '%' . $request->brand . '%');
             })
-            ->when($request->has('transmission_type'), function ($query) use ($request) {
-                return $query->where('transmission_type', $request->transmission_type);
+            ->when($request->filled('transmission_type'), function ($query) use ($request) {
+                return $query->where(function ($sub) use ($request) {
+                    $sub->where('transmission_type', $request->transmission_type)
+                        ->orWhere('transmission', $request->transmission_type);
+                });
             })
-            ->when($request->has('postcode'), function ($query) use ($request) {
+            ->when($request->filled('fuel_type'), function ($query) use ($request) {
+                return $query->where('fuel_type', $request->fuel_type);
+            })
+            ->when($request->filled('chauffeur_tier'), function ($query) use ($request) {
+                return $query->where('chauffeur_tier', $request->chauffeur_tier);
+            })
+            ->when($request->filled('postcode'), function ($query) use ($request) {
                 return $query->where('postcode', 'like', '%' . $request->postcode . '%');
             })
-            ->when($request->has('car_type_id'), function ($query) use ($request) {
+            ->when($request->filled('car_type_id'), function ($query) use ($request) {
                 return $query->where('car_type_id', $request->car_type_id);
             })
             ->where('status', 1)
@@ -178,53 +195,62 @@ class CustomerCarController extends Controller
         $endDate = \Carbon\Carbon::parse($request->end_date . ' ' . $request->drop_time);
 
         // Calculate hours and days
-        $totalHours = $startDate->diffInHours($endDate);
+        $totalHours = max(1, $startDate->diffInHours($endDate));
         $totalDays = (int) $startDate->diffInDays($endDate);
+        if ($totalDays == 0 || $totalHours % 24 != 0) {
+            $days = max(1, (int) ceil($totalHours / 24));
+        } else {
+            $days = max(1, $totalDays);
+        }
+
+        $isChauffeur = ($car->service_category === 'chauffeur' || $request->pickup_type === 'chauffeur');
+
+        if ($isChauffeur) {
+            // Chauffeur service: Respect min_booking_hours
+            $minHours = (int) ($car->min_booking_hours ?? 1);
+            $billedHours = max($totalHours, $minHours);
+
+            if (!empty($car->hourly_rate) && $car->hourly_rate > 0) {
+                $totalAmount = $billedHours * floatval($car->hourly_rate);
+                // If duration >= 8 hours and full-day rate package exists and is cheaper
+                if ($totalHours >= 8 && !empty($car->daily_rate) && $car->daily_rate > 0) {
+                    $packageDays = max(1, (int) ceil($totalHours / 24));
+                    $dayRateTotal = $packageDays * floatval($car->daily_rate);
+                    if ($dayRateTotal < $totalAmount) {
+                        $totalAmount = $dayRateTotal;
+                    }
+                }
+            } elseif (!empty($car->daily_rate) && $car->daily_rate > 0) {
+                $totalAmount = $days * floatval($car->daily_rate);
+            } else {
+                $totalAmount = 0;
+            }
+        } else {
+            // Car Hire (Self-Drive): Primary rate is daily_rate
+            if (!empty($car->daily_rate) && $car->daily_rate > 0) {
+                $totalAmount = $days * floatval($car->daily_rate);
+            } elseif (!empty($car->hourly_rate) && $car->hourly_rate > 0) {
+                $totalAmount = $totalHours * floatval($car->hourly_rate);
+            } else {
+                $totalAmount = 0;
+            }
+
+            // Add doorstep / home delivery fee if selected
+            if ($request->pickup_type === 'delivery' && !empty($car->delivery_fee) && $car->delivery_fee > 0) {
+                $totalAmount += floatval($car->delivery_fee);
+            }
+        }
 
         Log::info('Car Booking Calculation Debug', [
             'car_id' => $car->id,
+            'is_chauffeur' => $isChauffeur,
             'pricing_type' => $car->pricing_type,
             'hourly_rate' => $car->hourly_rate,
             'daily_rate' => $car->daily_rate,
             'totalHours' => $totalHours,
-            'totalDays' => $totalDays
+            'totalDays' => $totalDays,
+            'totalAmount' => $totalAmount
         ]);
-
-        // Determine pricing based on car's pricing_type
-        if ($car->pricing_type == 'hourly') {
-            // Hourly pricing only
-            $hours = max(1, $totalHours);
-            $totalAmount = $hours * $car->hourly_rate;
-            Log::info('Using HOURLY pricing', ['hours' => $hours, 'totalAmount' => $totalAmount]);
-        } elseif ($car->pricing_type == 'daily') {
-            // Daily pricing only
-            $days = $totalDays;
-            if ($totalHours % 24 != 0) {
-                $days += 1;
-            }
-            if ($days == 0) {
-                $days = 1;
-            }
-            $totalAmount = $days * $car->daily_rate;
-            Log::info('Using DAILY pricing', ['days' => $days, 'totalAmount' => $totalAmount]);
-        } else {
-            // Both hourly and daily
-            if ($totalHours <= 8) {
-                $hours = max(1, $totalHours);
-                $totalAmount = $hours * $car->hourly_rate;
-                Log::info('Using HOURLY pricing (both type, <=8h)', ['hours' => $hours, 'totalAmount' => $totalAmount]);
-            } else {
-                $days = $totalDays;
-                if ($totalHours % 24 != 0) {
-                    $days += 1;
-                }
-                if ($days == 0) {
-                    $days = 1;
-                }
-                $totalAmount = $days * $car->daily_rate;
-                Log::info('Using DAILY pricing (both type, >8h)', ['days' => $days, 'totalAmount' => $totalAmount]);
-            }
-        }
 
         $booking = DB::transaction(function () use ($request, $totalAmount, $car, $pickupTime24, $dropTime24) {
             $bookingData = [
@@ -284,9 +310,11 @@ class CustomerCarController extends Controller
             ]);
 
             // Minimal booking detail so regular booking details page has something to show
+            $serviceName = ($car->service_category === 'chauffeur' ? 'Chauffeur Service: ' : 'Car Hire: ') . $car->brand . ' ' . ($car->model ?? '') . ($car->registration_number ? " ({$car->registration_number})" : '');
             $bookingDetail = BookingDetail::create([
                 'booking_id' => $regularBooking->id,
                 'service_id' => null,
+                'service_name' => $serviceName,
                 'variant_key' => null,
                 'service_cost' => $totalAmount,
                 'quantity' => 1,
@@ -428,26 +456,39 @@ class CustomerCarController extends Controller
 
     public function searchChauffeurCars(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'car_type_id' => 'required|exists:car_types,id',
-            'date' => 'required|date|after_or_equal:today',
+        $input = $request->all();
+        if (isset($input['date'])) {
+            $input['date'] = trim($input['date']);
+        }
+
+        $validator = Validator::make($input, [
+            'car_type_id' => 'nullable',
+            'date' => 'nullable|date',
             'limit' => 'numeric|min:1|max:200',
             'offset' => 'numeric|min:0',
+            'chauffeur_tier' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
             return response()->json(response_formatter(DEFAULT_400, null, error_processor($validator)), 400);
         }
 
-        $limit = $request->query('limit', 10);
-        $offset = $request->query('offset', 1);
+        $limit = $request->get('limit', 10);
+        $offset = $request->get('offset', 1);
 
         $categoryId = 'fd6a04cf-3803-4a9b-a830-6cfa9c3c48d4';
 
         $cars = $this->car->with(['type', 'category', 'provider'])
-            ->where('category_id', $categoryId)
-            ->where('car_type_id', $request->car_type_id)
-            // ->where('preferred_areas', 'like', '%' . $request->postcode . '%')
+            ->where(function ($q) use ($categoryId) {
+                $q->where('service_category', 'chauffeur')
+                  ->orWhere('category_id', $categoryId);
+            })
+            ->when($request->filled('car_type_id'), function ($query) use ($request) {
+                return $query->where('car_type_id', $request->car_type_id);
+            })
+            ->when($request->filled('chauffeur_tier'), function ($query) use ($request) {
+                return $query->where('chauffeur_tier', $request->chauffeur_tier);
+            })
             ->where('status', 1)
             ->latest()
             ->paginate($limit, ['*'], 'offset', $offset)

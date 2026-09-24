@@ -3,11 +3,16 @@
 use Illuminate\Support\Facades\Route;
 use Modules\BookingModule\Http\Controllers\Web\Admin\BookingController;
 use Modules\BookingModule\Http\Controllers\Web\Provider\BookingController as ProviderBookingController;
+use Modules\BookingModule\Http\Controllers\Web\Provider\BookingEstimateController;
 
 Route::get('invoice', function () {
     $booking = \Modules\BookingModule\Entities\Booking::first();
     return view('bookingmodule::mail-templates.booking-request-sent', compact('booking'));
 });
+
+// Public customer estimate view & web acceptance
+Route::get('estimate/{token}', [BookingEstimateController::class, 'customerView'])->name('estimate.view');
+Route::post('estimate/{token}/accept', [BookingEstimateController::class, 'customerAcceptWeb'])->name('estimate.accept');
 
 Route::group(['prefix' => 'admin', 'as' => 'admin.', 'namespace' => 'Web\Admin', 'middleware' => ['admin']], function () {
 
@@ -97,5 +102,13 @@ Route::group(['prefix' => 'provider', 'as' => 'provider.', 'namespace' => 'Web\P
         Route::post('change-service-location/{id}', [ProviderBookingController::class, 'changeServiceLocation'])->name('change-service-location');
         Route::post('repeat-change-service-location/{id}', [ProviderBookingController::class, 'repeatChangeServiceLocation'])->name('repeat.change-service-location');
 
+    });
+
+    Route::group(['prefix' => 'estimate', 'as' => 'estimate.'], function () {
+        Route::get('list', [BookingEstimateController::class, 'index'])->name('index');
+        Route::get('create', [BookingEstimateController::class, 'create'])->name('create');
+        Route::post('store', [BookingEstimateController::class, 'store'])->name('store');
+        Route::get('details/{id}', [BookingEstimateController::class, 'show'])->name('details');
+        Route::get('cancel/{id}', [BookingEstimateController::class, 'destroy'])->name('cancel');
     });
 });

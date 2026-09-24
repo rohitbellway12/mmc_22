@@ -33,17 +33,38 @@ class BusinessSettingsModuleServiceProvider extends ServiceProvider
         try {
             $config = business_config('email_config', 'email_config');
             if ($config != null && $config['is_active'] == 1) {
-                Config::set('mail', [
-                    'driver' => $config->live_values['driver'],
-                    'host' => $config->live_values['host'],
-                    'port' => $config->live_values['port'],
-                    'username' => $config->live_values['user_name'],
-                    'password' => $config->live_values['password'],
-                    'encryption' => $config->live_values['encryption'],
-                    'from' => array('address' => $config->live_values['email_id'], 'name' => $config->live_values['mailer_name']),
-                    'sendmail' => '/usr/sbin/sendmail -bs',
-                    'pretend' => false,
+                $driver = $config->live_values['driver'] ?? 'smtp';
+                $host = $config->live_values['host'] ?? 'smtp.hostinger.com';
+                $port = (int)($config->live_values['port'] ?? 587);
+                $username = $config->live_values['user_name'] ?? '';
+                $password = $config->live_values['password'] ?? '';
+                $encryption = $config->live_values['encryption'] ?? 'tls';
+                $emailId = $config->live_values['email_id'] ?? 'admin@bellwayinfotech.com';
+                $mailerName = $config->live_values['mailer_name'] ?? 'MMC';
+
+                Config::set('mail.default', $driver);
+                Config::set('mail.mailers.smtp', [
+                    'transport' => 'smtp',
+                    'host' => $host,
+                    'port' => $port,
+                    'encryption' => $encryption,
+                    'username' => $username,
+                    'password' => $password,
+                    'timeout' => null,
+                    'auth_mode' => null,
                 ]);
+                Config::set('mail.from', [
+                    'address' => $emailId,
+                    'name' => $mailerName,
+                ]);
+
+                // Legacy keys
+                Config::set('mail.driver', $driver);
+                Config::set('mail.host', $host);
+                Config::set('mail.port', $port);
+                Config::set('mail.username', $username);
+                Config::set('mail.password', $password);
+                Config::set('mail.encryption', $encryption);
             }
 
             $timezone = business_config('time_zone', 'business_information');

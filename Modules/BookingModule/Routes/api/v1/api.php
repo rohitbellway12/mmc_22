@@ -33,14 +33,19 @@ Route::group(['prefix' => 'customer', 'as' => 'customer.', 'namespace' => 'Api\V
     });
 
     Route::group(['prefix' => 'car', 'as' => 'car.'], function () {
-        Route::get('list', [\Modules\CarHire\Http\Controllers\Api\V1\CustomerCarController::class, 'index']);
-        Route::get('details/{id}', [\Modules\CarHire\Http\Controllers\Api\V1\CustomerCarController::class, 'show']);
+        Route::get('list', [\Modules\CarHire\Http\Controllers\Api\V1\CustomerCarController::class, 'index'])->withoutMiddleware('auth:api');
+        Route::get('details/{id}', [\Modules\CarHire\Http\Controllers\Api\V1\CustomerCarController::class, 'show'])->withoutMiddleware('auth:api');
         Route::post('book', [\Modules\CarHire\Http\Controllers\Api\V1\CustomerCarController::class, 'store']);
 
         // Chauffeur Service Specific Routes
-        Route::get('types', [\Modules\CarHire\Http\Controllers\Api\V1\CustomerCarController::class, 'getCarTypes']);
-        Route::post('chauffeur/search', [\Modules\CarHire\Http\Controllers\Api\V1\CustomerCarController::class, 'searchChauffeurCars']);
+        Route::get('types', [\Modules\CarHire\Http\Controllers\Api\V1\CustomerCarController::class, 'getCarTypes'])->withoutMiddleware('auth:api');
+        Route::post('chauffeur/search', [\Modules\CarHire\Http\Controllers\Api\V1\CustomerCarController::class, 'searchChauffeurCars'])->withoutMiddleware('auth:api');
         Route::post('chauffeur/book', [\Modules\CarHire\Http\Controllers\Api\V1\CustomerCarController::class, 'bookChauffeur']);
+    });
+
+    Route::group(['prefix' => 'estimate', 'as' => 'estimate.'], function () {
+        Route::get('{token}', [\Modules\BookingModule\Http\Controllers\Api\V1\Customer\BookingEstimateController::class, 'details'])->withoutMiddleware('auth:api');
+        Route::post('accept', [\Modules\BookingModule\Http\Controllers\Api\V1\Customer\BookingEstimateController::class, 'accept'])->withoutMiddleware('auth:api');
     });
 });
 Route::any('digital-payment-booking-response', [BookingController::class, 'digitalPaymentBookingResponse']);
@@ -78,6 +83,16 @@ Route::group(['prefix' => 'provider', 'as' => 'provider.', 'namespace' => 'Api\V
         Route::put('service/edit/remove-service', [ProviderBookingController::class, 'removeService']);
         Route::post('change-service-location', [ProviderBookingController::class, 'changeServiceLocation']);
 
+    });
+
+    Route::group(['prefix' => 'estimate', 'as' => 'estimate.'], function () {
+        Route::get('search-customer', [\Modules\BookingModule\Http\Controllers\Api\V1\Provider\BookingEstimateController::class, 'searchCustomer']);
+        Route::get('services', [\Modules\BookingModule\Http\Controllers\Api\V1\Provider\BookingEstimateController::class, 'getServices']);
+        Route::get('cars', [\Modules\BookingModule\Http\Controllers\Api\V1\Provider\BookingEstimateController::class, 'getCars']);
+        Route::post('create', [\Modules\BookingModule\Http\Controllers\Api\V1\Provider\BookingEstimateController::class, 'store']);
+        Route::get('list', [\Modules\BookingModule\Http\Controllers\Api\V1\Provider\BookingEstimateController::class, 'index']);
+        Route::get('details/{id}', [\Modules\BookingModule\Http\Controllers\Api\V1\Provider\BookingEstimateController::class, 'show']);
+        Route::post('cancel/{id}', [\Modules\BookingModule\Http\Controllers\Api\V1\Provider\BookingEstimateController::class, 'cancel']);
     });
 });
 

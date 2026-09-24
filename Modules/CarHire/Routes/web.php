@@ -30,7 +30,9 @@ Route::group(['prefix' => 'provider', 'as' => 'provider.', 'middleware' => ['pro
         Route::post('store', [ProviderCarController::class, 'store'])->name('store');
         Route::get('edit/{id}', [ProviderCarController::class, 'edit'])->name('edit');
         Route::put('update/{id}', [ProviderCarController::class, 'update'])->name('update');
+        Route::post('update/{id}', [ProviderCarController::class, 'update']);
         Route::delete('delete/{id}', [ProviderCarController::class, 'destroy'])->name('destroy');
+        Route::get('ajax/models-by-brand/{brandId}', [CarAjaxController::class, 'getModelsByBrand'])->name('ajax.models-by-brand');
 
         // Car Booking Management
         Route::group(['prefix' => 'booking', 'as' => 'booking.'], function () {

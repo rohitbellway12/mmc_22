@@ -1,207 +1,207 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <title>{{translate('Registration Success')}}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style type="text/css">
-
-        @media screen {
-            @font-face {
-                font-family: 'Source Sans Pro';
-                font-style: normal;
-                font-weight: 400;
-                src: local('Source Sans Pro Regular'), local('SourceSansPro-Regular'), url(https://fonts.gstatic.com/s/sourcesanspro/v10/ODelI1aHBYDBqgeIAH2zlBM0YzuT7MdOe03otPbuUS0.woff) format('woff');
-            }
-
-            @font-face {
-                font-family: 'Source Sans Pro';
-                font-style: normal;
-                font-weight: 700;
-                src: local('Source Sans Pro Bold'), local('SourceSansPro-Bold'), url(https://fonts.gstatic.com/s/sourcesanspro/v10/toadOcfmlt9b38dHJxOBGFkQc6VGVFSmCnC_l7QZG60.woff) format('woff');
-            }
-        }
-
-        body,
-        table,
-        td,
-        a {
-            -ms-text-size-adjust: 100%;
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ translate('Registration Success') }}</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f3f4f6;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #1f2937;
             -webkit-text-size-adjust: 100%;
         }
-
-        table,
-        td {
-            mso-table-rspace: 0pt;
-            mso-table-lspace: 0pt;
+        .email-container {
+            max-width: 580px;
+            margin: 28px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
         }
-
-        img {
-            -ms-interpolation-mode: bicubic;
+        .header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            padding: 28px 24px;
+            text-align: center;
+            color: #ffffff;
         }
-
-        a[x-apple-data-detectors] {
-            font-family: inherit !important;
-            font-size: inherit !important;
-            font-weight: inherit !important;
-            line-height: inherit !important;
-            color: inherit !important;
-            text-decoration: none !important;
+        .header h1 {
+            margin: 0 0 6px;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
         }
-
-        div[style*="margin: 16px 0;"] {
-            margin: 0 !important;
-        }
-
-        body {
-            width: 100% !important;
-            height: 100% !important;
-            padding: 0 !important;
-            margin: 0 !important;
-        }
-
-        table {
-            border-collapse: collapse !important;
-        }
-
-        a {
-            color: #1a82e2;
-        }
-
-        .list-inline {
-            padding: 0;
+        .header p {
             margin: 0;
-            list-style: none;
+            font-size: 13px;
+            opacity: 0.9;
         }
-
-        .list-inline li {
+        .content {
+            padding: 32px 28px;
+        }
+        .welcome-badge {
             display: inline-block;
-        }
-
-        .bg-white {
-            background-color: #fff !important;
-        }
-
-        .gap-2 {
-            gap: 0.5rem !important;
-        }
-
-        p, h3, h5 {
-            margin-top: 0;
+            background-color: #ecfdf5;
+            color: #059669;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 6px 14px;
+            border-radius: 9999px;
             margin-bottom: 16px;
         }
-
-        .btn {
+        .greeting {
+            font-size: 18px;
+            font-weight: 700;
+            color: #111827;
+            margin: 0 0 10px;
+        }
+        .subtext {
             font-size: 14px;
+            color: #4b5563;
+            line-height: 1.6;
+            margin: 0 0 24px;
+        }
+        .cred-card {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .cred-title {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748b;
+            margin-bottom: 12px;
+        }
+        .cred-row {
+            padding: 8px 0;
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            border-bottom: 1px dashed #e2e8f0;
+        }
+        .cred-row:last-child {
+            border-bottom: none;
+        }
+        .cred-label {
+            color: #64748b;
+            font-weight: 500;
+        }
+        .cred-value {
+            color: #0f172a;
             font-weight: 600;
-            text-transform: capitalize;
-            line-height: 1;
-            padding: 0.75rem 1.625rem;
-            outline: none;
-            white-space: nowrap;
-            border: none;
-            background-color: #1455AC;
-            color: #fff;
+            font-family: monospace;
+            font-size: 15px;
         }
-
-        hr {
-            margin-block-start: 2rem;
-            margin-block-end: 2rem;
+        .btn-wrapper {
+            text-align: center;
+            margin: 28px 0;
         }
-
-        .top-wrap-box > *:not(:last-child) {
-            margin-top: 10px;
-        }
-
-        .list-gap {
-            margin-top: 10px;
-            margin-bottom: 10px;
-        }
-
-        .list-gap-2 > *,
-        .list-gap > * {
+        .btn {
             display: inline-block;
+            background-color: #2563eb;
+            color: #ffffff !important;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 12px 28px;
+            border-radius: 8px;
+            text-decoration: none;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
         }
-
-        .list-gap > *:not(:last-child) {
-            margin-right: 10px;
+        .tip-card {
+            background-color: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 12px 16px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #1e40af;
+            line-height: 1.5;
+            margin-bottom: 24px;
         }
-
-        .list-gap-2 > *:not(:last-child) {
-            margin-right: 20px;
+        .footer {
+            background-color: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+            padding: 20px 24px;
+            text-align: center;
+            font-size: 12px;
+            color: #6b7280;
         }
-
-        .text-center {
-            text-align: center !important;
-        }
-
-        .mb-1 {
-            margin-bottom: 4px !important;
-        }
-
-        .my-1 {
-            margin-top: 4px !important;
-            margin-bottom: 4px !important;
+        .footer a {
+            color: #2563eb;
+            text-decoration: none;
         }
     </style>
 </head>
-<body style="background-color: #fff;">
-<div class="box">
-    <div class="top-wrap-box">
-        @php( $logo = business_config('business_logo', 'business_information'))
-        <img src="{{asset('storage/app/public/business').'/' . $logo->live_values}}" alt="{{translate('Logo')}}"
-             width="140"/>
+<body>
+    @php
+        $businessName = business_config('business_name', 'business_information')?->live_values ?? 'MMC Automotive';
+        $customerName = trim(($customer->first_name ?? '') . ' ' . ($customer->last_name ?? ''));
+        if (empty($customerName)) {
+            $customerName = 'Valued Customer';
+        }
+    @endphp
 
-        <h3 style="margin-top: 20px">{{translate('Welcome to')}} {{(business_config('business_name', 'business_information'))->live_values}}
-            !</h3>
-        <h5>{{translate('Dear')}} {{$customer?->first_name}},</h5>
-        <p>{{translate('Your account for our on-demand service platform has been created.')}}.</p>
-
-        <img src="{{ asset('public/assets/admin-module/img/user-registration-mail.png') }}" alt="{{translate('Image')}}"
-             width="400" height="172"/>
-
-        <div class="my-1">{{translate('Your account credential:')}}</div>
-        <div class="mb-1"><strong>{{translate('Email: ')}} {{$customer->email}}</strong></div>
-        <p><strong>{{translate('Password: ')}} {{$password}}</strong></p>
-        <p>{{translate('You can now  access your account & reset your password from our app & website.')}}</p>
-        <p>{{translate('Remember to reset your password when you log in for the first time to ensure the security of your account.')}}</p>
-
-        @php($webUrl = business_config('web_url', 'landing_button_and_links'))
-        @php($token = json_encode(["identity" => $customer->email, "identity_type" => "email", "otp" => $otp, "from_url" => 1]))
-
-        @if($webUrl && $webUrl->is_active)
-            <p>{{ translate('Change password:') }} <a href="{{ $url }}">{{ translate('Click to change') }}</a></p>
-        @endif
-
-
-        <hr style="margin-top: 16px; margin-bottom: 16px">
-        <p>{{translate('Please contact us for any queries, we’re always happy to help')}}. </p>
-        <div>{{translate('Thanks & Regards')}},</div>
-        <div style="margin-top: 4px;">{{(business_config('business_name', 'business_information'))->live_values }}</div>
-    </div>
-
-    <div class="text-center">
-        <ul class="list-inline list-gap-2">
-            <li><a href="{{route('page.privacy-policy')}}">{{translate('Privacy Policy')}}</a></li>
-            <li><a href="{{route('page.contact-us')}}">{{translate('Contact Us')}}</a></li>
-        </ul>
-
-        <div class="list-gap">
-            @php($dataValues = business_config('social_media', 'landing_social_media'))
-            @foreach($dataValues->live_values??[] as $key=>$item)
-                <a href="{{$item['link']}}">
-                    <img width="20"
-                         src="{{ asset('public/assets/admin-module/img/icons/' . $item['media'] . '.png') }}"
-                         alt="{{ translate('image') }}">
-                </a>
-            @endforeach
+    <div class="email-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>{{ $businessName }}</h1>
+            <p>{{ translate('Welcome to our Platform') }}</p>
         </div>
-        <p class="text-center">{{translate('Copyright')}}
-            {{date('Y')}} {{(business_config('business_name', 'business_information'))->live_values }}
-            . {{translate('All right reserved')}}</p>
+
+        <!-- Content -->
+        <div class="content">
+            <span class="welcome-badge">🎉 {{ translate('Registration Successful') }}</span>
+            <h2 class="greeting">{{ translate('Hello') }} {{ $customerName }},</h2>
+            <p class="subtext">
+                {{ translate('Your account has been created successfully. You can now explore all our services and manage your bookings seamlessly.') }}
+            </p>
+
+            <!-- Credentials Box -->
+            <div class="cred-card">
+                <div class="cred-title">{{ translate('Your Login Credentials') }}</div>
+                <table style="width: 100%; border: none;">
+                    <tr>
+                        <td style="color: #64748b; font-size: 14px; padding: 6px 0;">{{ translate('Email') }}:</td>
+                        <td style="font-size: 14px; font-weight: 600; text-align: right; color: #0f172a;">{{ $customer->email }}</td>
+                    </tr>
+                    @if(!empty($password))
+                    <tr>
+                        <td style="color: #64748b; font-size: 14px; padding: 6px 0;">{{ translate('Temporary Password') }}:</td>
+                        <td style="font-size: 14px; font-weight: 700; text-align: right; color: #1e3a8a; font-family: monospace;">{{ $password }}</td>
+                    </tr>
+                    @endif
+                </table>
+            </div>
+
+            <div class="tip-card">
+                💡 <strong>{{ translate('Security Recommendation') }}:</strong> {{ translate('For your safety, please log in and change your temporary password immediately.') }}
+            </div>
+
+            @if(!empty($url))
+            <div class="btn-wrapper">
+                <a href="{{ $url }}" class="btn">{{ translate('Go to Your Account') }}</a>
+            </div>
+            @endif
+
+            <p style="font-size: 13px; color: #6b7280; text-align: center; margin: 0;">
+                {{ translate('Thank you for choosing') }} {{ $businessName }}!
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p style="margin: 0 0 6px;">&copy; {{ date('Y') }} {{ $businessName }}. {{ translate('All rights reserved.') }}</p>
+            <p style="margin: 0;">
+                {{ translate('Have questions?') }} <a href="mailto:{{ business_config('business_email', 'business_information')?->live_values ?? 'support@mmc.com' }}">{{ business_config('business_email', 'business_information')?->live_values ?? 'support@mmc.com' }}</a>
+            </p>
+        </div>
     </div>
-</div>
 </body>
 </html>
-
