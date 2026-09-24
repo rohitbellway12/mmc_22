@@ -177,6 +177,8 @@ class OTPVerificationController extends Controller
             if ($request['identity_type'] == 'email') {
                 $user = User::where('email', $request['identity'])->first();
                 $user->is_email_verified = 1;
+                $user->email_verified_at = now();
+                $user->is_active = 1;
                 $user->save();
 
             } else if ($request['identity_type'] == 'phone') {

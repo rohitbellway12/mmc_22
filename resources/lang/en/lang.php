@@ -6669,4 +6669,5 @@ _Message' => 'Customer notification for provider bid offer
   'e.g., Please enter your tyre size' => 'E.g., Please enter your tyre size',
   'e.g., Option 1, Option 2, Option 3' => 'E.g., Option 1, Option 2, Option 3',
   'Question' => 'Question',
+  'The web api key field is required when party name is firebase_otp_verification.' => 'The web api key field is required when party name is firebase otp verification.',
 );

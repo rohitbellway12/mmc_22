@@ -66,25 +66,52 @@ class RegisterController extends Controller
             return response()->json(response_formatter(DEFAULT_400, null, error_processor($validator)), 403);
         }
 
-        if (User::where('email', $request['email'])->exists()) {
-            return response()->json(response_formatter(DEFAULT_400, null, [["error_code" => "email", "message" => translate('Email already taken')]]), 400);
-        }
-        if (User::where('phone', $request['phone'])->exists()) {
-            return response()->json(response_formatter(DEFAULT_400, null, [["error_code" => "phone", "message" => translate('Phone already taken')]]), 400);
+        // Check if an already VERIFIED customer exists with this email
+        $existingVerifiedEmail = User::where('email', $request['email'])
+            ->where('is_email_verified', 1)
+            ->first();
+        if ($existingVerifiedEmail) {
+            return response()->json(response_formatter(DEFAULT_400, null, [["error_code" => "email", "message" => translate('Email already registered and verified. Please login.')]]), 400);
         }
 
-        $user = $this->user;
+        // Check if an already VERIFIED customer exists with this phone (and a different email)
+        $existingVerifiedPhone = User::where('phone', $request['phone'])
+            ->where('email', '!=', $request['email'])
+            ->where('is_email_verified', 1)
+            ->first();
+        if ($existingVerifiedPhone) {
+            return response()->json(response_formatter(DEFAULT_400, null, [["error_code" => "phone", "message" => translate('Phone already taken by another account')]]), 400);
+        }
+
+        // If an unverified user exists with this email or phone (e.g. dropped out earlier without entering OTP), reuse and update it
+        $user = User::where(function ($query) use ($request) {
+                $query->where('email', $request['email'])
+                    ->orWhere('phone', $request['phone']);
+            })
+            ->where('is_email_verified', 0)
+            ->first();
+
+        if (!$user) {
+            $user = new User();
+        }
+
         $user->first_name = $request->first_name;
         $user->last_name = $request->last_name;
         $user->email = $request->email;
         $user->phone = $request->phone;
-        $user->profile_image = $request->has('profile_image') ? file_uploader('user/profile_image/', 'png', $request->profile_image) : 'default.png';
+        if ($request->has('profile_image')) {
+            $user->profile_image = file_uploader('user/profile_image/', 'png', $request->profile_image);
+        } elseif (!$user->profile_image) {
+            $user->profile_image = 'default.png';
+        }
         $user->date_of_birth = $request->date_of_birth;
         $user->gender = $request->gender ?? 'male';
         $user->password = bcrypt($request->password);
         $user->user_type = 'customer';
-        $user->is_active = 1;
+        $user->is_active = 0; // Remains inactive until OTP is verified
+        $user->is_email_verified = 0; // Strictly unverified until OTP check
 
+        $userWhoRerreded = null;
         if ($request->has('referral_code')) {
             $customerReferralEarning = business_config('customer_referral_earning', 'customer_config')->live_values ?? 0;
             $amount = business_config('referral_value_per_currency_unit', 'customer_config')->live_values ?? 0;
@@ -95,7 +122,6 @@ class RegisterController extends Controller
             }
 
             if ($customerReferralEarning == 1 && isset($userWhoRerreded)) {
-
                 referralEarningTransactionDuringRegistration($userWhoRerreded, $amount);
 
                 $userRefund = isNotificationActive(null, 'refer_earn', 'notification', 'user');
@@ -123,15 +149,163 @@ class RegisterController extends Controller
         $user->referred_by = $userWhoRerreded->id ?? null;
         $user->save();
 
-        $phoneVerification = checkActiveSMSGatewayCount();
-        $emailVerification = login_setup('email_verification')?->value ?? 0;
+        // Generate 6-digit OTP
+        $otp = env('APP_ENV') != 'live' ? '123456' : rand(100000, 999999);
 
-        if (!$phoneVerification && !$emailVerification) {
-            $loginData = ['token' => $user->createToken(CUSTOMER_PANEL_ACCESS)->accessToken, 'is_active' => $user['is_active']];
-            return response()->json(response_formatter(REGISTRATION_200, $loginData), 200);
+        // Store OTP in user_verifications
+        DB::table('user_verifications')->updateOrInsert(
+            [
+                'identity' => $request['email'],
+                'identity_type' => 'email',
+            ],
+            [
+                'identity' => $request['email'],
+                'identity_type' => 'email',
+                'user_id' => $user->id,
+                'otp' => $otp,
+                'expires_at' => now()->addMinutes(10),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        // Send OTP via Email
+        try {
+            Mail::to($request['email'])->send(new OTPMail($otp));
+        } catch (\Exception $e) {
+            info("Customer registration OTP email error: " . $e->getMessage());
         }
 
-        return response()->json(response_formatter(REGISTRATION_200), 200);
+        return response()->json(response_formatter([
+            'response_code' => 'registration_otp_sent_200',
+            'message' => translate('OTP has been sent to your email. Please verify OTP to complete registration.'),
+        ], [
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'is_email_verified' => 0,
+            'otp' => env('APP_ENV') != 'live' ? $otp : null,
+        ]), 200);
+    }
+
+    /**
+     * Verify customer email registration OTP
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function customerVerifyOtp(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required_without:identity|email',
+            'identity' => 'required_without:email',
+            'otp' => 'required|max:6',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(response_formatter(DEFAULT_400, null, error_processor($validator)), 400);
+        }
+
+        $identity = $request->email ?? $request->identity;
+
+        $verification = DB::table('user_verifications')
+            ->where('identity', $identity)
+            ->where('otp', $request->otp)
+            ->first();
+
+        if (!$verification) {
+            return response()->json(response_formatter(OTP_VERIFICATION_FAIL_403), 403);
+        }
+
+        if (isset($verification->expires_at) && now()->gt($verification->expires_at)) {
+            return response()->json(response_formatter([
+                'response_code' => 'otp_expired_403',
+                'message' => translate('OTP has expired. Please request a new one.'),
+            ]), 403);
+        }
+
+        $user = User::where('email', $identity)->first();
+        if (!$user) {
+            return response()->json(response_formatter(DEFAULT_404), 404);
+        }
+
+        $user->is_email_verified = 1;
+        $user->email_verified_at = now();
+        $user->is_active = 1; // Activate user
+        $user->save();
+
+        // Delete verification record
+        DB::table('user_verifications')->where('identity', $identity)->delete();
+
+        // Generate access token for customer
+        $token = $user->createToken(CUSTOMER_PANEL_ACCESS)->accessToken;
+
+        return response()->json(response_formatter([
+            'response_code' => 'registration_200',
+            'message' => translate('Email verified successfully! Registration is now complete.'),
+        ], [
+            'token' => $token,
+            'is_active' => $user->is_active,
+            'is_email_verified' => 1,
+            'user' => $user,
+        ]), 200);
+    }
+
+    /**
+     * Resend customer registration OTP to email
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function customerResendOtp(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required_without:identity|email',
+            'identity' => 'required_without:email',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(response_formatter(DEFAULT_400, null, error_processor($validator)), 400);
+        }
+
+        $identity = $request->email ?? $request->identity;
+
+        $user = User::where('email', $identity)->first();
+        if (!$user) {
+            return response()->json(response_formatter(DEFAULT_404), 404);
+        }
+
+        if ($user->is_email_verified == 1) {
+            return response()->json(response_formatter([
+                'response_code' => 'already_verified_200',
+                'message' => translate('Your email is already verified. Please login.'),
+            ]), 200);
+        }
+
+        $otp = env('APP_ENV') != 'live' ? '123456' : rand(100000, 999999);
+
+        DB::table('user_verifications')->updateOrInsert(
+            [
+                'identity' => $identity,
+                'identity_type' => 'email',
+            ],
+            [
+                'identity' => $identity,
+                'identity_type' => 'email',
+                'user_id' => $user->id,
+                'otp' => $otp,
+                'expires_at' => now()->addMinutes(10),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        try {
+            Mail::to($identity)->send(new OTPMail($otp));
+        } catch (\Exception $e) {
+            info("Resend OTP error: " . $e->getMessage());
+        }
+
+        return response()->json(response_formatter(DEFAULT_SENT_OTP_200, [
+            'otp' => env('APP_ENV') != 'live' ? $otp : null,
+        ]), 200);
     }
 
 

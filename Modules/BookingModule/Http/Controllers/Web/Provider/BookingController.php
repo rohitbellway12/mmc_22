@@ -584,6 +584,7 @@ class BookingController extends Controller
             $bookingIgnore = $this->bookingIgnore;
             $bookingIgnore->booking_id = $bookingId;
             $bookingIgnore->provider_id = $providerId;
+            $bookingIgnore->reason = $request->reason ?? $request->ignore_reason ?? null;
 
             if (!empty($booking->provider_id)) {
                 $booking->provider_id = null;

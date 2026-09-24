@@ -270,11 +270,10 @@
                                 @else
                                     <div class="c1-light-bg radius-10">
                                         <div class="p-4 d-flex justify-content-center">
-                                            <button type="button" class="btn btn-soft--danger g-2 px-5 mx-3 {{ env('APP_ENV') != 'demo' ? 'form-alert' : 'demo_check' }}"
+                                            <button type="button" class="btn btn-soft--danger g-2 px-5 mx-3 {{ env('APP_ENV') != 'demo' ? 'btn-reject-booking' : 'demo_check' }}"
                                                     title="{{ translate('Ignore') }}"
-                                                    data-id="cancel-{{$booking['id']}}"
-                                                    data-message="{{translate('Once you ignore the request, it will be no longer on your booking request list.')}}?"
-                                                    data-title="{{translate('Are you sure to ignore the booking request?')}}">
+                                                    data-action-url="{{ route('provider.booking.ignore', [$booking['id']]) }}"
+                                                    data-readable-id="{{ $booking['readable_id'] }}">
                                                 {{ translate('Ignore') }}
                                             </button>
 
@@ -287,13 +286,6 @@
                                             </button>
                                         </div>
                                     </div>
-                                    <form
-                                            action="{{route('provider.booking.ignore',[$booking['id']])}}"
-                                            method="post" id="cancel-{{$booking['id']}}"
-                                            class="hidden">
-                                        @csrf
-                                        @method('GET')
-                                    </form>
 
                                     <form
                                             action="{{route('provider.booking.accept',[$booking['id']])}}"
@@ -486,6 +478,7 @@
             </div>
         </div>
     @endif
+    @include('bookingmodule::provider.booking.partials._ignore-modal')
 @endsection
 
 @push('script')

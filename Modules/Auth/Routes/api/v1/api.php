@@ -33,6 +33,8 @@ Route::group(['prefix' => 'provider', 'as' => 'provider', 'namespace' => 'Api\V1
 Route::group(['prefix' => 'customer', 'as' => 'customer', 'namespace' => 'Api\V1'], function () {
     Route::group(['prefix' => 'auth', 'as' => 'auth.'], function () {
         Route::post('registration', 'RegisterController@customerRegister')->name('registration');
+        Route::post('verify-otp', 'RegisterController@customerVerifyOtp')->name('verify-otp');
+        Route::post('resend-otp', 'RegisterController@customerResendOtp')->name('resend-otp');
         Route::post('login', 'LoginController@customerLogin')->name('login');
         Route::post('otp-login', 'LoginController@customerOtpLogin')->name('otp-login');
         Route::post('social-login', 'LoginController@customerSocialLogin')->name('social-login');

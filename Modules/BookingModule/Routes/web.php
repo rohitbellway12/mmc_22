@@ -72,7 +72,7 @@ Route::group(['prefix' => 'provider', 'as' => 'provider.', 'namespace' => 'Web\P
         Route::get('repeat-details/{id}', [ProviderBookingController::class, 'repeatDetails'])->name('repeat_details');
         Route::get('repeat-single-details/{id}', [ProviderBookingController::class, 'repeatSingleDetails'])->name('repeat_single_details');
         Route::get('request-accept/{booking_id}', [ProviderBookingController::class, 'requestAccept'])->name('accept');
-        Route::get('request-ignore/{booking_id}', [ProviderBookingController::class, 'requestIgnore'])->name('ignore');
+        Route::any('request-ignore/{booking_id}', [ProviderBookingController::class, 'requestIgnore'])->name('ignore');
         Route::any('status-update/{id}', [ProviderBookingController::class, 'statusUpdate'])->name('status_update');
         Route::any('payment-update/{id}', [ProviderBookingController::class, 'paymentUpdate'])->name('payment_update');
         Route::any('schedule-update/{id}', [ProviderBookingController::class, 'scheduleUpdate'])->name('schedule_update');

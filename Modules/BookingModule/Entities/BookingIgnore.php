@@ -9,7 +9,21 @@ class BookingIgnore extends Model
 {
     use HasFactory;
 
-    protected $fillable = [];
+    protected $fillable = [
+        'booking_id',
+        'provider_id',
+        'reason',
+    ];
+
+    public function provider(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(\Modules\ProviderManagement\Entities\Provider::class, 'provider_id');
+    }
+
+    public function booking(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Booking::class, 'booking_id');
+    }
     
     protected static function newFactory()
     {
